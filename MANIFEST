@@ -1,0 +1,15 @@
+Changes
+MANIFEST
+META.yml
+Makefile.PL
+README
+lib/Regexp/Wildcards.pm
+t/00-load.t
+t/01-import.t
+t/10-jokers.t
+t/11-commas.t
+t/12-brackets.t
+t/boilerplate.t
+t/kwalitee.t
+t/pod-coverage.t
+t/pod.t

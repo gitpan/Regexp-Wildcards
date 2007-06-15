@@ -1,0 +1,79 @@
+NAME
+    Regexp::Wildcards - Converts wildcards to regexps.
+
+VERSION
+    Version 0.01
+
+SYNOPSIS
+        use Regexp::Wildcards qw/wc2re/;
+
+        my $re;
+        $re = wc2re 'a{b.,c}*' => 'unix';
+        $re = wc2re 'a.,b*'    => 'win32';
+
+DESCRIPTION
+    This module converts wildcards expressions to Perl regular expressions.
+    It handles the "*" and "?" jokers, as well as Unix bracketed
+    alternatives "{,}", and uses the backspace ("\") as an escape character.
+    Wrappers are provided to mimic the behaviour of Windows and Unix shells.
+
+EXPORT
+    Four functions are exported only on request : "wc2re", "wc2re_unix",
+    "wc2re_win32" and "wc2re_jokers".
+
+FUNCTIONS
+  "wc2re_unix"
+    This function takes as its only argument the wildcard string to process,
+    and returns the corresponding regular expression (or "undef" if the
+    source is invalid) according to standard Unix wildcard rules. It
+    successively escapes all regexp special characters that doesn't hold any
+    meaning for wildcards, turns jokers into their regexp equivalents, and
+    changes bracketed blocks into alternations. If brackets are unbalanced,
+    it will try to substitute as many of them as possible, and then escape
+    the remaining "{" and "}".
+
+  "wc2re_win32"
+    Similar to the precedent, but for Windows wildcards. Bracketed blocks
+    are no longer handled (which means that brackets will be escaped), but
+    you can still provide a comma-separated list of items.
+
+  "wc2re_jokers"
+    This one only handles the "?" and "*" jokers.
+
+  "wc2re"
+    A generic function that wraps around all the different rules. The first
+    argument is the wildcard expression, and the second one is the type of
+    rules to apply, currently either "unix", "win32" or "jokers". If the
+    type is undefined, it defaults to "unix".
+
+SEE ALSO
+    Net::FTPServer has a method for that. Only jokers are translated, and
+    escaping won't preserve them.
+
+    File::Find::Match::Util has a "wildcar" function that compiles a
+    matcher. Only handles "*".
+
+    Text::Buffer has the "convertWildcardToRegex" class method that handles
+    jokers.
+
+AUTHOR
+    Vincent Pit, "<perl at profvince.com>"
+
+BUGS
+    Please report any bugs or feature requests to "bug-regexp-wildcards at
+    rt.cpan.org", or through the web interface at
+    <http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Regexp-Wildcards>. I
+    will be notified, and then you'll automatically be notified of progress
+    on your bug as I make changes.
+
+SUPPORT
+    You can find documentation for this module with the perldoc command.
+
+        perldoc Regexp::Wildcards
+
+COPYRIGHT & LICENSE
+    Copyright 2007 Vincent Pit, all rights reserved.
+
+    This program is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
