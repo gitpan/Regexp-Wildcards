@@ -1,21 +1,26 @@
 NAME
-    Regexp::Wildcards - Converts wildcards to regexps.
+    Regexp::Wildcards - Converts wildcards expressions to Perl regular
+    expressions.
 
 VERSION
-    Version 0.01
+    Version 0.02
 
 SYNOPSIS
         use Regexp::Wildcards qw/wc2re/;
 
         my $re;
-        $re = wc2re 'a{b.,c}*' => 'unix';
-        $re = wc2re 'a.,b*'    => 'win32';
+        $re = wc2re 'a{b.,c}*' => 'unix';   # Do it Unix style.
+        $re = wc2re 'a.,b*'    => 'win32';  # Do it Windows style.
+        $re = wc2re '*{x,y}.'  => 'jokers'; # Process the jokers & escape the rest.
 
 DESCRIPTION
-    This module converts wildcards expressions to Perl regular expressions.
-    It handles the "*" and "?" jokers, as well as Unix bracketed
-    alternatives "{,}", and uses the backspace ("\") as an escape character.
-    Wrappers are provided to mimic the behaviour of Windows and Unix shells.
+    In many situations, users may want to specify patterns to match but
+    don't need the full power of regexps. Wildcards make one of those sets
+    of simplified rules. This module converts wildcards expressions to Perl
+    regular expressions, so that you can use them for matching. It handles
+    the "*" and "?" jokers, as well as Unix bracketed alternatives "{,}",
+    and uses the backspace ("\") as an escape character. Wrappers are
+    provided to mimic the behaviour of Windows and Unix shells.
 
 EXPORT
     Four functions are exported only on request : "wc2re", "wc2re_unix",
@@ -24,21 +29,42 @@ EXPORT
 FUNCTIONS
   "wc2re_unix"
     This function takes as its only argument the wildcard string to process,
-    and returns the corresponding regular expression (or "undef" if the
-    source is invalid) according to standard Unix wildcard rules. It
-    successively escapes all regexp special characters that doesn't hold any
-    meaning for wildcards, turns jokers into their regexp equivalents, and
-    changes bracketed blocks into alternations. If brackets are unbalanced,
-    it will try to substitute as many of them as possible, and then escape
-    the remaining "{" and "}".
+    and returns the corresponding regular expression according to standard
+    Unix wildcard rules. It successively escapes all unprotected regexp
+    special characters that doesn't hold any meaning for wildcards, turns
+    jokers into their regexp equivalents, and changes bracketed blocks into
+    "(?:|)" alternations. If brackets are unbalanced, it will try to
+    substitute as many of them as possible, and then escape the remaining
+    "{" and "}". Commas outside of any bracket-delimited block will also be
+    escaped.
+
+        # This is a valid brackets expression which is correctly handled.
+        print 'ok' if wc2re_unix('{a{b,c}d,e}') eq '(?:a(?:b|c)d|e)';
+
+    Unbalanced bracket expressions can always be rescued, but it may change
+    completely its meaning. For example :
+
+        # The first comma is replaced, and the remaining brackets and comma are
+        # escaped.
+        print 'ok' if wc2re_unix('{a\\{b,c}d,e}') eq '(?:a\\{b|c)d\\,e\\}';
+
+        # All the brackets and commas are escaped.
+        print 'ok' if wc2re_unix('{a{b,c\\}d,e}') eq '\\{a\\{b\\,c\\}d\\,e\\}';
 
   "wc2re_win32"
     Similar to the precedent, but for Windows wildcards. Bracketed blocks
     are no longer handled (which means that brackets will be escaped), but
-    you can still provide a comma-separated list of items.
+    you can provide a comma-separated list of items.
+
+        # All the brackets are escaped, and commas are seen as list delimiters.
+        print 'ok' if wc2re_win32('{a{b,c}d,e}') eq '(?:\\{a\\{b|c\\}d|e\\})';
 
   "wc2re_jokers"
-    This one only handles the "?" and "*" jokers.
+    This one only handles the "?" and "*" jokers. All other unquoted regexp
+    metacharacters will be escaped.
+
+        # Everything is escaped.
+        print 'ok' if wc2re_jokers('{a{b,c}d,e}') eq '\\{a\\{b\\,c\\}d\\,e\\}';
 
   "wc2re"
     A generic function that wraps around all the different rules. The first
@@ -46,7 +72,12 @@ FUNCTIONS
     rules to apply, currently either "unix", "win32" or "jokers". If the
     type is undefined, it defaults to "unix".
 
+DEPENDENCIES
+    Text::Balanced, which is bundled with perl since version 5.7.3
+
 SEE ALSO
+    Some modules provide incomplete alternatives as helper functions :
+
     Net::FTPServer has a method for that. Only jokers are translated, and
     escaping won't preserve them.
 

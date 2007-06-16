@@ -11,11 +11,11 @@ Regexp::Wildcards - Converts wildcards expressions to Perl regular expressions.
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -53,18 +53,19 @@ our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
 
 =head2 C<wc2re_unix>
 
-This function takes as its only argument the wildcard string to process, and returns the corresponding regular expression (or C<undef> if the source is invalid) according to standard Unix wildcard rules. It successively escapes all unprotected regexp special characters that doesn't hold any meaning for wildcards, turns jokers into their regexp equivalents, and changes bracketed blocks into C<(?:|)> alternations. If brackets are unbalanced, it will try to substitute as many of them as possible, and then escape the remaining C<{> and C<}>.
+This function takes as its only argument the wildcard string to process, and returns the corresponding regular expression according to standard Unix wildcard rules. It successively escapes all unprotected regexp special characters that doesn't hold any meaning for wildcards, turns jokers into their regexp equivalents, and changes bracketed blocks into C<(?:|)> alternations. If brackets are unbalanced, it will try to substitute as many of them as possible, and then escape the remaining C<{> and C<}>. Commas outside of any bracket-delimited block will also be escaped.
 
-Unbalanced bracket expressions can always be rescued, but it may change completely its meaning. As a side effect, commas that first appear to be between brackets can be taken at the uppermost level, which invalidates the pattern. For example :
+    # This is a valid brackets expression which is correctly handled.
+    print 'ok' if wc2re_unix('{a{b,c}d,e}') eq '(?:a(?:b|c)d|e)';
 
-    # The last orphaned } gets escaped, and the first comma is replaced.
-    # We also need to escape the comma because unix doesn't allow them out
-    # of brackets.
-    print 'ok' if wc2re_unix('{a\\{b,c}d\\,e}') eq '(?:a\\{b|c)d\\,e\\}';
+Unbalanced bracket expressions can always be rescued, but it may change completely its meaning. For example :
 
-    # All of the unprotected brackets are escaped, which means that we must
-    # escape all the commas.
-    print 'ok' if wc2re_unix('{a{b\\,c\\}d\\,e}') eq '\\{a\\{b\\,c\\}d\\,e\\}';
+    # The first comma is replaced, and the remaining brackets and comma are
+    # escaped.
+    print 'ok' if wc2re_unix('{a\\{b,c}d,e}') eq '(?:a\\{b|c)d\\,e\\}';
+
+    # All the brackets and commas are escaped.
+    print 'ok' if wc2re_unix('{a{b,c\\}d,e}') eq '\\{a\\{b\\,c\\}d\\,e\\}';
 
 =cut
 
@@ -77,7 +78,10 @@ sub wc2re_unix {
 
 =head2 C<wc2re_win32>
 
-Similar to the precedent, but for Windows wildcards. Bracketed blocks are no longer handled (which means that brackets will be escaped), but you can still provide a comma-separated list of items.
+Similar to the precedent, but for Windows wildcards. Bracketed blocks are no longer handled (which means that brackets will be escaped), but you can provide a comma-separated list of items.
+
+    # All the brackets are escaped, and commas are seen as list delimiters.
+    print 'ok' if wc2re_win32('{a{b,c}d,e}') eq '(?:\\{a\\{b|c\\}d|e\\})';
 
 =cut
 
@@ -94,7 +98,10 @@ sub wc2re_win32 {
 
 =head2 C<wc2re_jokers>
 
-This one only handles the C<?> and C<*> jokers. All other unquoted regexp metacharacters will be quoted.
+This one only handles the C<?> and C<*> jokers. All other unquoted regexp metacharacters will be escaped.
+
+    # Everything is escaped.
+    print 'ok' if wc2re_jokers('{a{b,c}d,e}') eq '\\{a\\{b\\,c\\}d\\,e\\}';
 
 =cut
 
@@ -194,12 +201,10 @@ sub do_bracketed {
  my $rest = shift;
  my ($re, $bracket, $prefix) = ('');
  while (($bracket, $rest, $prefix) = extract $rest and $bracket) {
-  return undef if $prefix =~ /(?<!\\)((?:\\\\)*),/;
   $re .= $prefix . do_brackets($bracket);
  }
- return undef if $rest =~ /(?<!\\)((?:\\\\)*),/;
  $re .= $rest;
- $re =~ s/(?<!\\)((?:\\\\)*[\{\}])/\\$1/g;
+ $re =~ s/(?<!\\)((?:\\\\)*[\{\},])/\\$1/g;
  return $re;
 }
 

@@ -4,6 +4,7 @@ META.yml
 Makefile.PL
 README
 lib/Regexp/Wildcards.pm
+samples/wc2re.pl
 t/00-load.t
 t/01-import.t
 t/10-jokers.t

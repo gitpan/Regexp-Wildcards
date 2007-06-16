@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                Regexp-Wildcards
-version:             0.01
+version:             0.02
 abstract:            Converts wildcards expressions to Perl regular expressions.
 license:             perl
 generated_by:        ExtUtils::MakeMaker version 6.32
