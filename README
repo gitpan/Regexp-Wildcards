@@ -1,9 +1,9 @@
 NAME
-    Regexp::Wildcards - Converts wildcards expressions to Perl regular
+    Regexp::Wildcards - Converts wildcard expressions to Perl regular
     expressions.
 
 VERSION
-    Version 0.02
+    Version 0.03
 
 SYNOPSIS
         use Regexp::Wildcards qw/wc2re/;
@@ -16,15 +16,11 @@ SYNOPSIS
 DESCRIPTION
     In many situations, users may want to specify patterns to match but
     don't need the full power of regexps. Wildcards make one of those sets
-    of simplified rules. This module converts wildcards expressions to Perl
+    of simplified rules. This module converts wildcard expressions to Perl
     regular expressions, so that you can use them for matching. It handles
     the "*" and "?" jokers, as well as Unix bracketed alternatives "{,}",
     and uses the backspace ("\") as an escape character. Wrappers are
     provided to mimic the behaviour of Windows and Unix shells.
-
-EXPORT
-    Four functions are exported only on request : "wc2re", "wc2re_unix",
-    "wc2re_win32" and "wc2re_jokers".
 
 FUNCTIONS
   "wc2re_unix"
@@ -38,14 +34,13 @@ FUNCTIONS
     "{" and "}". Commas outside of any bracket-delimited block will also be
     escaped.
 
-        # This is a valid brackets expression which is correctly handled.
+        # This is a valid bracket expression, and is completely translated.
         print 'ok' if wc2re_unix('{a{b,c}d,e}') eq '(?:a(?:b|c)d|e)';
 
-    Unbalanced bracket expressions can always be rescued, but it may change
-    completely its meaning. For example :
+    The function handles unbalanced bracket expressions, by escaping
+    everything it can't recognize. For example :
 
-        # The first comma is replaced, and the remaining brackets and comma are
-        # escaped.
+        # The first comma is replaced, and the remaining brackets and comma are escaped.
         print 'ok' if wc2re_unix('{a\\{b,c}d,e}') eq '(?:a\\{b|c)d\\,e\\}';
 
         # All the brackets and commas are escaped.
@@ -72,6 +67,10 @@ FUNCTIONS
     rules to apply, currently either "unix", "win32" or "jokers". If the
     type is undefined, it defaults to "unix".
 
+EXPORT
+    These four functions are exported only on request : "wc2re",
+    "wc2re_unix", "wc2re_win32" and "wc2re_jokers".
+
 DEPENDENCIES
     Text::Balanced, which is bundled with perl since version 5.7.3
 
@@ -81,8 +80,8 @@ SEE ALSO
     Net::FTPServer has a method for that. Only jokers are translated, and
     escaping won't preserve them.
 
-    File::Find::Match::Util has a "wildcar" function that compiles a
-    matcher. Only handles "*".
+    File::Find::Match::Util has a "wildcard" function that compiles a
+    matcher. It only handles "*".
 
     Text::Buffer has the "convertWildcardToRegex" class method that handles
     jokers.

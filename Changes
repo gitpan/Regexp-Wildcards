@@ -1,5 +1,9 @@
 Revision history for Regexp-Wildcards
 
+0.03    2007-06-17 14:45 UTC
+        + Fix : Missing PREREQ_PM in Makefile.PL
+	+ Fix : Typos in pod.
+
 0.02    2007-06-16 09:15 UTC
         + Fix : wc2re_unix should escape top-level commas.
 	+ Fix : added missing samples/wc2re.pl

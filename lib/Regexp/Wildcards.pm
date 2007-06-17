@@ -7,15 +7,15 @@ use Text::Balanced qw/extract_bracketed/;
 
 =head1 NAME
 
-Regexp::Wildcards - Converts wildcards expressions to Perl regular expressions.
+Regexp::Wildcards - Converts wildcard expressions to Perl regular expressions.
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 SYNOPSIS
 
@@ -28,26 +28,7 @@ our $VERSION = '0.02';
 
 =head1 DESCRIPTION
 
-In many situations, users may want to specify patterns to match but don't need the full power of regexps. Wildcards make one of those sets of simplified rules. This module converts wildcards expressions to Perl regular expressions, so that you can use them for matching. It handles the C<*> and C<?> jokers, as well as Unix bracketed alternatives C<{,}>, and uses the backspace (C<\>) as an escape character. Wrappers are provided to mimic the behaviour of Windows and Unix shells.
-
-=head1 EXPORT
-
-Four functions are exported only on request : C<wc2re>, C<wc2re_unix>, C<wc2re_win32> and C<wc2re_jokers>.
-
-=cut
-
-use base qw/Exporter/;
-
-my %types = (
- 'jokers' => \&wc2re_jokers,
- 'unix'   => \&wc2re_unix,
- 'win32'  => \&wc2re_win32
-);
-
-our @EXPORT      = ();
-our @EXPORT_OK   = ('wc2re', map { 'wc2re_' . $_ } keys %types);
-our @EXPORT_FAIL = qw/extract do_jokers do_commas do_brackets do_bracketed/; 
-our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
+In many situations, users may want to specify patterns to match but don't need the full power of regexps. Wildcards make one of those sets of simplified rules. This module converts wildcard expressions to Perl regular expressions, so that you can use them for matching. It handles the C<*> and C<?> jokers, as well as Unix bracketed alternatives C<{,}>, and uses the backspace (C<\>) as an escape character. Wrappers are provided to mimic the behaviour of Windows and Unix shells.
 
 =head1 FUNCTIONS
 
@@ -55,13 +36,12 @@ our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
 
 This function takes as its only argument the wildcard string to process, and returns the corresponding regular expression according to standard Unix wildcard rules. It successively escapes all unprotected regexp special characters that doesn't hold any meaning for wildcards, turns jokers into their regexp equivalents, and changes bracketed blocks into C<(?:|)> alternations. If brackets are unbalanced, it will try to substitute as many of them as possible, and then escape the remaining C<{> and C<}>. Commas outside of any bracket-delimited block will also be escaped.
 
-    # This is a valid brackets expression which is correctly handled.
+    # This is a valid bracket expression, and is completely translated.
     print 'ok' if wc2re_unix('{a{b,c}d,e}') eq '(?:a(?:b|c)d|e)';
 
-Unbalanced bracket expressions can always be rescued, but it may change completely its meaning. For example :
+The function handles unbalanced bracket expressions, by escaping everything it can't recognize. For example :
 
-    # The first comma is replaced, and the remaining brackets and comma are
-    # escaped.
+    # The first comma is replaced, and the remaining brackets and comma are escaped.
     print 'ok' if wc2re_unix('{a\\{b,c}d,e}') eq '(?:a\\{b|c)d\\,e\\}';
 
     # All the brackets and commas are escaped.
@@ -117,12 +97,31 @@ A generic function that wraps around all the different rules. The first argument
 
 =cut
 
+my %types = (
+ 'jokers' => \&wc2re_jokers,
+ 'unix'   => \&wc2re_unix,
+ 'win32'  => \&wc2re_win32
+);
+
 sub wc2re {
  my ($wc, $type) = @_;
  return unless defined $wc;
  $type ||= 'unix';
  return $types{lc $type}($wc);
 }
+
+=head1 EXPORT
+
+These four functions are exported only on request : C<wc2re>, C<wc2re_unix>, C<wc2re_win32> and C<wc2re_jokers>.
+
+=cut
+
+use base qw/Exporter/;
+
+our @EXPORT      = ();
+our @EXPORT_OK   = ('wc2re', map { 'wc2re_' . $_ } keys %types);
+our @EXPORT_FAIL = qw/extract do_jokers do_commas do_brackets do_bracketed/; 
+our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
 
 =head1 DEPENDENCIES
 
@@ -134,7 +133,7 @@ Some modules provide incomplete alternatives as helper functions :
 
 L<Net::FTPServer> has a method for that. Only jokers are translated, and escaping won't preserve them.
 
-L<File::Find::Match::Util> has a C<wildcar> function that compiles a matcher. Only handles C<*>.
+L<File::Find::Match::Util> has a C<wildcard> function that compiles a matcher. It only handles C<*>.
 
 L<Text::Buffer> has the C<convertWildcardToRegex> class method that handles jokers.
 
