@@ -1,6 +1,6 @@
 #!perl -T
 
-use Test::More tests => 3 * (4 + 2 + 9 + 2) * 3;
+use Test::More tests => 3 * (4 + 2 + 7 + 9 + 2) * 3;
 
 use Regexp::Wildcards qw/wc2re/;
 
@@ -30,6 +30,27 @@ for my $t (qw/unix win32 jokers/) {
 
  try $t, 'multiple *', '**', '.*';
  try $t, 'multiple ?', '??', '..';
+
+ # Variables
+
+ {
+  local $Regexp::Wildcards::CaptureSingle = 1;
+  try $t, 'multiple capturing ?', '??\\??', '(.)(.)\\?(.)';
+  local $Regexp::Wildcards::CaptureAny = 1;
+  try $t, 'multiple capturing * (greedy)', '**\\**', '(.*)\\*(.*)';
+  try $t, 'multiple capturing * (greedy) and capturing ?',
+          '**??\\??\\**', '(.*)(.)(.)\\?(.)\\*(.*)';
+  $Regexp::Wildcards::CaptureSingle = 0;
+  try $t, 'multiple capturing * (greedy) and non-capturing ?',
+          '**??\\??\\**', '(.*)..\\?.\\*(.*)';
+  $Regexp::Wildcards::CaptureAny = -1;
+  try $t, 'multiple capturing * (non-greedy)', '**\\**', '(.*?)\\*(.*?)';
+  try $t, 'multiple capturing * (non-greedy) and non-capturing ?',
+          '**??\\??\\**', '(.*?)..\\?.\\*(.*?)';
+  $Regexp::Wildcards::CaptureSingle = 1;
+  try $t, 'multiple capturing * (non-greedy) and capturing ?',
+          '**??\\??\\**', '(.*?)(.)(.)\\?(.)\\*(.*?)';
+ }
 
  # Escaping
 

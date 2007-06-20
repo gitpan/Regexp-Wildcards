@@ -3,7 +3,7 @@ NAME
     expressions.
 
 VERSION
-    Version 0.03
+    Version 0.04
 
 SYNOPSIS
         use Regexp::Wildcards qw/wc2re/;
@@ -22,17 +22,71 @@ DESCRIPTION
     and uses the backspace ("\") as an escape character. Wrappers are
     provided to mimic the behaviour of Windows and Unix shells.
 
+VARIABLES
+    These variables control if the wildcards jokers and brackets must
+    capture their match. They can be globally set by writing in your program
+
+        $Regexp::Wildcards::CaptureAny = -1;
+        # From then, '*' jokers are capturing
+
+    or can be locally specified via "local"
+
+        {
+         local $Regexp::Wildcards::CaptureAny = -1;
+         # In this block, the '*' joker is capturing.
+         ...
+        }
+        # Back to the situation from before the block
+
+    This section describes also how those elements are translated by the
+    functions.
+
+  $CaptureSingle
+    When this variable is true, each occurence of the unescaped "?" joker is
+    made capturing in the resulting regexp (they are be replaced by "(.)").
+    Otherwise, they are just replaced by ".". Default is the latter.
+
+        'a???b\\??' is translated to 'a(.)(.)(.)b\\?(.)' if $CaptureSingle is true
+                                     'a...b\\?.'         otherwise (default)
+
+  $CaptureAny
+    By default this variable is false, and successions of unescaped "*"
+    jokers are replaced by one single ".*". When it evalutes to true, those
+    sequences of "*" are made into one capture, which is greedy ("(.*)") for
+    "$CaptureAny > 0" and otherwise non-greedy ("(.*?)").
+
+        'a***b\\**' is translated to 'a.*b\\*.*'       if $CaptureAny is false (default)
+                                     'a(.*)b\\*(.*)'   if $CaptureAny > 0
+                                     'a(.*?)b\\*(.*?)' otherwise
+
+  $CaptureBrackets
+    If this variable is set to true, valid brackets constructs are made into
+    "( | )" captures, and otherwise they are replaced by non-capturing
+    alternations ("(?: | ")), which is the default.
+
+        'a{b\\},\\{c}' is translated to 'a(b\\}|\\{c)'   if $CaptureBrackets is true
+                                        'a(?:b\\}|\\{c)' otherwise (default)
+
 FUNCTIONS
-  "wc2re_unix"
+  "wc2re_jokers"
     This function takes as its only argument the wildcard string to process,
-    and returns the corresponding regular expression according to standard
-    Unix wildcard rules. It successively escapes all unprotected regexp
-    special characters that doesn't hold any meaning for wildcards, turns
-    jokers into their regexp equivalents, and changes bracketed blocks into
-    "(?:|)" alternations. If brackets are unbalanced, it will try to
-    substitute as many of them as possible, and then escape the remaining
-    "{" and "}". Commas outside of any bracket-delimited block will also be
-    escaped.
+    and returns the corresponding regular expression where the jokers "?"
+    and "*" have been translated into their regexp equivalents (see
+    "VARIABLES" for more details). All other unprotected regexp
+    metacharacters are escaped.
+
+        # Everything is escaped.
+        print 'ok' if wc2re_jokers('{a{b,c}d,e}') eq '\\{a\\{b\\,c\\}d\\,e\\}';
+
+  "wc2re_unix"
+    Similar to the precedent, but this one conforms to standard Unix shell
+    wildcard rules. It successively escapes all unprotected regexp special
+    characters that doesn't hold any meaning for wildcards, turns jokers
+    into their regexp equivalents (see "wc2re_jokers"), and changes
+    bracketed blocks into (possibly capturing) alternations as described in
+    "VARIABLES". If brackets are unbalanced, it tries to substitute as many
+    of them as possible, and then escape the remaining "{" and "}". Commas
+    outside of any bracket-delimited block are also escaped.
 
         # This is a valid bracket expression, and is completely translated.
         print 'ok' if wc2re_unix('{a{b,c}d,e}') eq '(?:a(?:b|c)d|e)';
@@ -47,29 +101,39 @@ FUNCTIONS
         print 'ok' if wc2re_unix('{a{b,c\\}d,e}') eq '\\{a\\{b\\,c\\}d\\,e\\}';
 
   "wc2re_win32"
-    Similar to the precedent, but for Windows wildcards. Bracketed blocks
-    are no longer handled (which means that brackets will be escaped), but
-    you can provide a comma-separated list of items.
+    This one works just like the two before, but for Windows wildcards.
+    Bracketed blocks are no longer handled (which means that brackets are
+    escaped), but you can provide a comma-separated list of items.
 
         # All the brackets are escaped, and commas are seen as list delimiters.
         print 'ok' if wc2re_win32('{a{b,c}d,e}') eq '(?:\\{a\\{b|c\\}d|e\\})';
 
-  "wc2re_jokers"
-    This one only handles the "?" and "*" jokers. All other unquoted regexp
-    metacharacters will be escaped.
-
-        # Everything is escaped.
-        print 'ok' if wc2re_jokers('{a{b,c}d,e}') eq '\\{a\\{b\\,c\\}d\\,e\\}';
-
   "wc2re"
     A generic function that wraps around all the different rules. The first
     argument is the wildcard expression, and the second one is the type of
-    rules to apply, currently either "unix", "win32" or "jokers". If the
-    type is undefined, it defaults to "unix".
+    rules to apply which can be :
+
+    'unix', 'win32', 'jokers'
+        For one of those raw rule names, "wc2re" simply maps to
+        "wc2re_unix", "wc2re_win32" and "wc2re_jokers" respectively.
+
+    $^O If you supply the Perl operating system name, the call is deferred
+        to "wc2re_win32" for $^O equal to 'dos', 'os2', 'MSWin32' or
+        'cygwin', and to "wc2re_unix" in all the other cases.
+
+    If the type is undefined or not supported, it defaults to 'unix'.
+
+         # Wraps to wc2re_jokers ($re eq 'a\\{b\\,c\\}.*').
+         $re = wc2re 'a{b,c}*' => 'jokers';
+
+         # Wraps to wc2re_win32 ($re eq '(?:a\\{b|c\\}.*)')
+         #       or wc2re_unix  ($re eq 'a(?:b|c).*')       depending on $^O.
+         $re = wc2re 'a{b,c}*' => $^O;
 
 EXPORT
     These four functions are exported only on request : "wc2re",
-    "wc2re_unix", "wc2re_win32" and "wc2re_jokers".
+    "wc2re_unix", "wc2re_win32" and "wc2re_jokers". The variables are not
+    exported.
 
 DEPENDENCIES
     Text::Balanced, which is bundled with perl since version 5.7.3

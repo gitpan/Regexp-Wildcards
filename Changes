@@ -1,5 +1,14 @@
 Revision history for Regexp-Wildcards
 
+0.04    2007-06-20 19:00 UTC
+        + Add : You can supply $^O as the type for wc2re, which will wrap to
+                wc2re_win32 for 'dos', 'os2', 'MSWin32', 'cygwin', and to
+                wc2re_unix in all the other cases.
+        + Add : Generated regexps can now capture the interesting bits of the
+                wildcard expression via the configuration variables
+                $CaptureSingle, $CaptureAny and $CaptureBrackets (see pod)
+        + Add : Corresponding pod & tests
+
 0.03    2007-06-17 14:45 UTC
         + Fix : Missing PREREQ_PM in Makefile.PL
 	+ Fix : Typos in pod.
