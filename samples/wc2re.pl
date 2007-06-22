@@ -3,8 +3,6 @@
 use strict;
 use warnings;
 
-use lib q:../lib/:;
-
 use Regexp::Wildcards qw/wc2re/;
 
 my $type = (grep $^O eq $_, qw/dos os2 MSWin32 cygwin/) ? 'win32' : 'unix';

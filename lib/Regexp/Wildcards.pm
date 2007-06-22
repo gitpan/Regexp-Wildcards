@@ -11,20 +11,20 @@ Regexp::Wildcards - Converts wildcard expressions to Perl regular expressions.
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 SYNOPSIS
 
     use Regexp::Wildcards qw/wc2re/;
 
     my $re;
-    $re = wc2re 'a{b.,c}*' => 'unix';   # Do it Unix style.
-    $re = wc2re 'a.,b*'    => 'win32';  # Do it Windows style.
-    $re = wc2re '*{x,y}.'  => 'jokers'; # Process the jokers & escape the rest.
+    $re = wc2re 'a{b?,c}*' => 'unix';   # Do it Unix style.
+    $re = wc2re 'a?,b*'    => 'win32';  # Do it Windows style.
+    $re = wc2re '*{x,y}?'  => 'jokers'; # Process the jokers & escape the rest.
 
 =head1 DESCRIPTION
 
@@ -34,14 +34,14 @@ In many situations, users may want to specify patterns to match but don't need t
 
 These variables control if the wildcards jokers and brackets must capture their match. They can be globally set by writing in your program
 
-    $Regexp::Wildcards::CaptureAny = -1;
-    # From then, '*' jokers are capturing
+    $Regexp::Wildcards::CaptureSingle = 1;
+    # From then, the '?' joker is capturing
 
 or can be locally specified via C<local>
 
     {
-     local $Regexp::Wildcards::CaptureAny = -1;
-     # In this block, the '*' joker is capturing.
+     local $Regexp::Wildcards::CaptureAny = 1;
+     # In this block, the '?' joker is capturing.
      ...
     }
     # Back to the situation from before the block
@@ -201,6 +201,10 @@ our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
 
 L<Text::Balanced>, which is bundled with perl since version 5.7.3
 
+=head1 CAVEATS
+
+This module does not implement the strange behaviours of Windows shell that result from the special handling of the three last characters (for the file extension). For example, Windows XP shell matches C<*a> like C<.*a>, C<*a?> like C<.*a.?>, C<*a??> like C<.*a.{0,2}> and so on.
+
 =head1 SEE ALSO
 
 Some modules provide incomplete alternatives as helper functions :
@@ -238,7 +242,7 @@ under the same terms as Perl itself.
 
 =cut
 
-sub extract { extract_bracketed shift, '{',  qr/.*?(?:(?<!\\)(?:\\\\)*)(?={)/; }
+sub extract { extract_bracketed shift, '{',  qr/.*?(?<!\\)(?:\\\\)*(?={)/; }
 
 sub do_jokers {
  local $_ = shift;

@@ -3,15 +3,15 @@ NAME
     expressions.
 
 VERSION
-    Version 0.04
+    Version 0.05
 
 SYNOPSIS
         use Regexp::Wildcards qw/wc2re/;
 
         my $re;
-        $re = wc2re 'a{b.,c}*' => 'unix';   # Do it Unix style.
-        $re = wc2re 'a.,b*'    => 'win32';  # Do it Windows style.
-        $re = wc2re '*{x,y}.'  => 'jokers'; # Process the jokers & escape the rest.
+        $re = wc2re 'a{b?,c}*' => 'unix';   # Do it Unix style.
+        $re = wc2re 'a?,b*'    => 'win32';  # Do it Windows style.
+        $re = wc2re '*{x,y}?'  => 'jokers'; # Process the jokers & escape the rest.
 
 DESCRIPTION
     In many situations, users may want to specify patterns to match but
@@ -26,14 +26,14 @@ VARIABLES
     These variables control if the wildcards jokers and brackets must
     capture their match. They can be globally set by writing in your program
 
-        $Regexp::Wildcards::CaptureAny = -1;
-        # From then, '*' jokers are capturing
+        $Regexp::Wildcards::CaptureSingle = 1;
+        # From then, the '?' joker is capturing
 
     or can be locally specified via "local"
 
         {
-         local $Regexp::Wildcards::CaptureAny = -1;
-         # In this block, the '*' joker is capturing.
+         local $Regexp::Wildcards::CaptureAny = 1;
+         # In this block, the '?' joker is capturing.
          ...
         }
         # Back to the situation from before the block
@@ -137,6 +137,12 @@ EXPORT
 
 DEPENDENCIES
     Text::Balanced, which is bundled with perl since version 5.7.3
+
+CAVEATS
+    This module does not implement the strange behaviours of Windows shell
+    that result from the special handling of the three last characters (for
+    the file extension). For example, Windows XP shell matches *a like
+    ".*a", "*a?" like ".*a.?", "*a??" like ".*a.{0,2}" and so on.
 
 SEE ALSO
     Some modules provide incomplete alternatives as helper functions :

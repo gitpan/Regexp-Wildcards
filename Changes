@@ -1,5 +1,10 @@
 Revision history for Regexp-Wildcards
 
+0.05    2007-06-22 14:40 UTC
+        + Add : Windows strange behaviours caveat.
+        + Chg : Simplified bracket prefix.
+        + Fix : Typos in pod.
+
 0.04    2007-06-20 19:00 UTC
         + Add : You can supply $^O as the type for wc2re, which will wrap to
                 wc2re_win32 for 'dos', 'os2', 'MSWin32', 'cygwin', and to
