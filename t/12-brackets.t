@@ -1,10 +1,12 @@
 #!perl -T
 
-use Test::More tests => 26;
+use Test::More tests => 27;
 
-use Regexp::Wildcards qw/wc2re_jokers wc2re_unix wc2re_win32/;
+use Regexp::Wildcards qw/wc2re_jokers wc2re_sql wc2re_unix wc2re_win32/;
 
 ok(wc2re_jokers('a{b\\\\,c\\\\}d') eq 'a\\{b\\\\\\,c\\\\\\}d', 'wc2re_jokers');
+
+ok(wc2re_sql('a{b\\\\,c\\\\}d') eq 'a\\{b\\\\\\,c\\\\\\}d', 'wc2re_sql');
 
 ok(wc2re_win32('a{b\\\\,c\\\\}d') eq '(?:a\\{b\\\\|c\\\\\\}d)', 'wc2re_win32');
 

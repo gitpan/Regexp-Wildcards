@@ -11,11 +11,11 @@ Regexp::Wildcards - Converts wildcard expressions to Perl regular expressions.
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 =head1 SYNOPSIS
 
@@ -25,23 +25,24 @@ our $VERSION = '0.05';
     $re = wc2re 'a{b?,c}*' => 'unix';   # Do it Unix style.
     $re = wc2re 'a?,b*'    => 'win32';  # Do it Windows style.
     $re = wc2re '*{x,y}?'  => 'jokers'; # Process the jokers & escape the rest.
+    $re = wc2re '%a_c%'    => 'sql';    # Turn SQL wildcards into regexps.
 
 =head1 DESCRIPTION
 
-In many situations, users may want to specify patterns to match but don't need the full power of regexps. Wildcards make one of those sets of simplified rules. This module converts wildcard expressions to Perl regular expressions, so that you can use them for matching. It handles the C<*> and C<?> jokers, as well as Unix bracketed alternatives C<{,}>, and uses the backspace (C<\>) as an escape character. Wrappers are provided to mimic the behaviour of Windows and Unix shells.
+In many situations, users may want to specify patterns to match but don't need the full power of regexps. Wildcards make one of those sets of simplified rules. This module converts wildcard expressions to Perl regular expressions, so that you can use them for matching. It handles the C<*> and C<?> shell jokers, as well as Unix bracketed alternatives C<{,}>, but also C<%> and C<_> SQL wildcards. Backspace (C<\>) is used as an escape character. Wrappers are provided to mimic the behaviour of Windows and Unix shells.
 
 =head1 VARIABLES
 
 These variables control if the wildcards jokers and brackets must capture their match. They can be globally set by writing in your program
 
     $Regexp::Wildcards::CaptureSingle = 1;
-    # From then, the '?' joker is capturing
+    # From then, "exactly one" wildcards are capturing
 
 or can be locally specified via C<local>
 
     {
-     local $Regexp::Wildcards::CaptureAny = 1;
-     # In this block, the '?' joker is capturing.
+     local $Regexp::Wildcards::CaptureSingle = 1;
+     # In this block, "exactly one" wildcards are capturing.
      ...
     }
     # Back to the situation from before the block
@@ -50,26 +51,48 @@ This section describes also how those elements are translated by the L<functions
 
 =head2 C<$CaptureSingle>
 
-When this variable is true, each occurence of the unescaped C<?> joker is made capturing in the resulting regexp (they are be replaced by C<(.)>). Otherwise, they are just replaced by C<.>. Default is the latter.
+When this variable is true, each occurence of unescaped I<"exactly one"> wildcards (i.e. C<?> jokers or C<_> for SQL wildcards) are made capturing in the resulting regexp (they are be replaced by C<(.)>). Otherwise, they are just replaced by C<.>. Default is the latter.
 
+    For jokers :
     'a???b\\??' is translated to 'a(.)(.)(.)b\\?(.)' if $CaptureSingle is true
                                  'a...b\\?.'         otherwise (default)
+
+    For SQL wildcards :
+    'a___b\\__' is translated to 'a(.)(.)(.)b\\_(.)' if $CaptureSingle is true
+                                 'a...b\\_.'         otherwise (default)
 
 =cut
 
 our $CaptureSingle = 0;
 
+sub capture_single {
+ return $CaptureSingle ? '(.)'
+                       : '.';
+}
+
 =head2 C<$CaptureAny>
 
-By default this variable is false, and successions of unescaped C<*> jokers are replaced by B<one> single C<.*>. When it evalutes to true, those sequences of C<*> are made into B<one> capture, which is greedy (C<(.*)>) for C<$CaptureAny E<gt> 0> and otherwise non-greedy (C<(.*?)>).
+By default this variable is false, and successions of unescaped I<"any"> wildcards (i.e. C<*> jokers or C<%> for SQL wildcards) are replaced by B<one> single C<.*>. When it evalutes to true, those sequences of I<"any"> wildcards are made into B<one> capture, which is greedy (C<(.*)>) for C<$CaptureAny E<gt> 0> and otherwise non-greedy (C<(.*?)>).
 
+    For jokers :
     'a***b\\**' is translated to 'a.*b\\*.*'       if $CaptureAny is false (default)
                                  'a(.*)b\\*(.*)'   if $CaptureAny > 0
                                  'a(.*?)b\\*(.*?)' otherwise
 
+    For SQL wildcards :
+    'a%%%b\\%%' is translated to 'a.*b\\%.*'       if $CaptureAny is false (default)
+                                 'a(.*)b\\%(.*)'   if $CaptureAny > 0
+                                 'a(.*?)b\\%(.*?)' otherwise
+
 =cut
 
 our $CaptureAny = 0;
+
+sub capture_any {
+ return $CaptureAny ? (($CaptureAny > 0) ? '(.*)'
+                                         : '(.*?)')
+                    : '.*';
+}
 
 =head2 C<$CaptureBrackets>
 
@@ -82,11 +105,16 @@ If this variable is set to true, valid brackets constructs are made into C<( | )
 
 our $CaptureBrackets = 0;
 
+sub capture_brackets {
+ return $CaptureBrackets ? '('
+                         : '(?:';
+}
+
 =head1 FUNCTIONS
 
 =head2 C<wc2re_jokers>
 
-This function takes as its only argument the wildcard string to process, and returns the corresponding regular expression where the jokers C<?> and C<*> have been translated into their regexp equivalents (see L</VARIABLES> for more details). All other unprotected regexp metacharacters are escaped.
+This function takes as its only argument the wildcard string to process, and returns the corresponding regular expression where the jokers C<?> (I<"exactly one">) and C<*> (I<"any">) have been translated into their regexp equivalents (see L</VARIABLES> for more details). All other unprotected regexp metacharacters are escaped.
 
     # Everything is escaped.
     print 'ok' if wc2re_jokers('{a{b,c}d,e}') eq '\\{a\\{b\\,c\\}d\\,e\\}';
@@ -99,9 +127,21 @@ sub wc2re_jokers {
  return do_jokers($wc);
 }
 
+=head2 C<wc2re_sql>
+
+Similar to the precedent, but for the SQL wildcards C<_> (I<"exactly one">) and C<%> (I<"any">). All other unprotected regexp metacharacters are escaped.
+ 
+=cut
+  
+sub wc2re_sql {
+ my ($wc) = @_;
+ $wc =~ s/(?<!\\)((?:\\\\)*[^\w\s%\\])/\\$1/g;
+ return do_sql($wc);
+}
+
 =head2 C<wc2re_unix>
 
-Similar to the precedent, but this one conforms to standard Unix shell wildcard rules. It successively escapes all unprotected regexp special characters that doesn't hold any meaning for wildcards, turns jokers into their regexp equivalents (see L</wc2re_jokers>), and changes bracketed blocks into (possibly capturing) alternations as described in L</VARIABLES>. If brackets are unbalanced, it tries to substitute as many of them as possible, and then escape the remaining C<{> and C<}>. Commas outside of any bracket-delimited block are also escaped.
+This function conforms to standard Unix shell wildcard rules. It successively escapes all unprotected regexp special characters that doesn't hold any meaning for wildcards, turns C<?> and C<*> jokers into their regexp equivalents (see L</wc2re_jokers>), and changes bracketed blocks into (possibly capturing) alternations as described in L</VARIABLES>. If brackets are unbalanced, it tries to substitute as many of them as possible, and then escape the remaining C<{> and C<}>. Commas outside of any bracket-delimited block are also escaped.
 
     # This is a valid bracket expression, and is completely translated.
     print 'ok' if wc2re_unix('{a{b,c}d,e}') eq '(?:a(?:b|c)d|e)';
@@ -125,7 +165,7 @@ sub wc2re_unix {
 
 =head2 C<wc2re_win32>
 
-This one works just like the two before, but for Windows wildcards. Bracketed blocks are no longer handled (which means that brackets are escaped), but you can provide a comma-separated list of items.
+This one works just like the one before, but for Windows wildcards. Bracketed blocks are no longer handled (which means that brackets are escaped), but you can provide a comma-separated list of items.
 
     # All the brackets are escaped, and commas are seen as list delimiters.
     print 'ok' if wc2re_win32('{a{b,c}d,e}') eq '(?:\\{a\\{b|c\\}d|e\\})';
@@ -138,7 +178,7 @@ sub wc2re_win32 {
  $wc =~ s/(?<!\\)((?:\\\\)*[^\w\s?*\\,])/\\$1/g;
  my $re = do_jokers($wc);
  if ($re =~ /(?<!\\)(?:\\\\)*,/) { # win32 allows comma-separated lists
-  $re = ($CaptureBrackets ? '(' : '(?:') . do_commas($re) . ')';
+  $re = capture_brackets . do_commas($re) . ')';
  }
  return $re;
 }
@@ -149,9 +189,9 @@ A generic function that wraps around all the different rules. The first argument
 
 =over 4
 
-=item C<'unix'>, C<'win32'>, C<'jokers'>
+=item C<'unix'>, C<'win32'>, C<'jokers'>, C<'sql'>
 
-For one of those raw rule names, C<wc2re> simply maps to C<wc2re_unix>, C<wc2re_win32> and C<wc2re_jokers> respectively.
+For one of those raw rule names, C<wc2re> simply maps to C<wc2re_unix>, C<wc2re_win32>, C<wc2re_jokers> and C<wc2re_sql> respectively.
 
 =item C<$^O>
 
@@ -172,6 +212,7 @@ If the type is undefined or not supported, it defaults to C<'unix'>.
 
 my %types = (
  'jokers'    => \&wc2re_jokers,
+ 'sql'       => \&wc2re_sql,
  'unix'      => \&wc2re_unix,
  map { lc $_ => \&wc2re_win32 } qw/win32 dos os2 MSWin32 cygwin/
 );
@@ -186,15 +227,17 @@ sub wc2re {
 
 =head1 EXPORT
 
-These four functions are exported only on request : C<wc2re>, C<wc2re_unix>, C<wc2re_win32> and C<wc2re_jokers>. The variables are not exported.
+These five functions are exported only on request : C<wc2re>, C<wc2re_unix>, C<wc2re_win32>, C<wc2re_jokers> and C<wc2re_sql>. The variables are not exported.
 
 =cut
 
 use base qw/Exporter/;
 
 our @EXPORT      = ();
-our @EXPORT_OK   = ('wc2re', map { 'wc2re_' . $_ } keys %types);
-our @EXPORT_FAIL = qw/extract do_jokers do_commas do_brackets do_bracketed/; 
+our @EXPORT_OK   = ('wc2re', map { 'wc2re_'.$_ } keys %types);
+our @EXPORT_FAIL = qw/extract/,
+                   (map { 'do_'.$_ } qw/jokers sql commas brackets bracketed/),
+                   (map { 'capture_'.$_ } qw/single any brackets/);
 our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
 
 =head1 DEPENDENCIES
@@ -249,12 +292,24 @@ sub do_jokers {
  # escape an odd number of \ that doesn't protect a regexp/wildcard special char
  s/(?<!\\)((?:\\\\)*\\(?:[\w\s]|$))/\\$1/g;
  # substitute ? preceded by an even number of \
- my $s = $CaptureSingle ? '(.)' : '.';
+ my $s = capture_single;
  s/(?<!\\)((?:\\\\)*)\?/$1$s/g;
  # substitute * preceded by an even number of \
- $s = $CaptureAny ? (($CaptureAny > 0) ? '(.*)' : '(.*?)')
-                  : '.*';
+ $s = capture_any;
  s/(?<!\\)((?:\\\\)*)\*+/$1$s/g;
+ return $_;
+}
+
+sub do_sql {
+ local $_ = shift;
+ # escape an odd number of \ that doesn't protect a regexp/wildcard special char
+ s/(?<!\\)((?:\\\\)*\\(?:[^\W_]|\s|$))/\\$1/g;
+ # substitute _ preceded by an even number of \
+ my $s = capture_single;
+ s/(?<!\\)((?:\\\\)*)_/$1$s/g;
+ # substitute * preceded by an even number of \
+ $s = capture_any;
+ s/(?<!\\)((?:\\\\)*)%+/$1$s/g;
  return $_;
 }
 
@@ -274,7 +329,7 @@ sub do_brackets {
   $re .= do_commas($prefix) . do_brackets($bracket);
  }
  $re .= do_commas($rest);
- return ($CaptureBrackets ? '(' : '(?:') . $re . ')';
+ return capture_brackets . $re . ')';
 }
 
 sub do_bracketed {

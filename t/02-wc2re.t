@@ -2,7 +2,7 @@
 
 use Test::More tests => 10;
 
-use Regexp::Wildcards qw/wc2re wc2re_unix wc2re_win32/;
+use Regexp::Wildcards qw/wc2re wc2re_win32/;
 
 for my $O (qw/win32 dos os2 cygwin/, 'MSWin32') {
  for ('a{b,c}*', 'a?{b\\{,\\}c}') {
