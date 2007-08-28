@@ -3,7 +3,7 @@ NAME
     expressions.
 
 VERSION
-    Version 0.06
+    Version 0.07
 
 SYNOPSIS
         use Regexp::Wildcards qw/wc2re/;
@@ -179,6 +179,8 @@ SEE ALSO
 
 AUTHOR
     Vincent Pit, "<perl at profvince.com>"
+
+    You can contact me by mail or on #perl @ FreeNode (Prof_Vince).
 
 BUGS
     Please report any bugs or feature requests to "bug-regexp-wildcards at

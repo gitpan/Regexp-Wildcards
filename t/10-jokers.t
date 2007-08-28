@@ -1,5 +1,8 @@
 #!perl -T
 
+use strict;
+use warnings;
+
 use Test::More tests => 4 * (4 + 2 + 7 + 9 + 2) * 3;
 
 use Regexp::Wildcards qw/wc2re/;

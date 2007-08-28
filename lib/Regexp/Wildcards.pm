@@ -11,11 +11,11 @@ Regexp::Wildcards - Converts wildcard expressions to Perl regular expressions.
 
 =head1 VERSION
 
-Version 0.06
+Version 0.07
 
 =cut
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 =head1 SYNOPSIS
 
@@ -261,6 +261,8 @@ L<Text::Buffer> has the C<convertWildcardToRegex> class method that handles joke
 =head1 AUTHOR
 
 Vincent Pit, C<< <perl at profvince.com> >>
+
+You can contact me by mail or on #perl @ FreeNode (Prof_Vince).
 
 =head1 BUGS
 

@@ -10,7 +10,8 @@ WriteMakefile(
     ABSTRACT_FROM       => 'lib/Regexp/Wildcards.pm',
     PL_FILES            => {},
     PREREQ_PM           => {
-        'Test::More' => 0,
+        'Exporter'       => 0,
+        'Test::More'     => 0,
         'Text::Balanced' => 0,
     },
     dist                => {

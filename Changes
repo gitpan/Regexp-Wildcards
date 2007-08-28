@@ -1,5 +1,9 @@
 Revision history for Regexp-Wildcards
 
+0.07    2007-08-28 12:35 UTC
+        + Fix : Tests are now strict.
+        + Fix : Complete dependencies.
+
 0.06    2007-06-26 12:40 UTC
         + Add : SQL '%' and '_' wildcards (with corresponding pod & tests).
 	+ Fix : Typos in pod (looks like this will never end...).

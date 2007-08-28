@@ -1,5 +1,8 @@
 #!perl -T
 
+use strict;
+use warnings;
+
 use Test::More tests => 10;
 
 use Regexp::Wildcards qw/wc2re wc2re_win32/;
