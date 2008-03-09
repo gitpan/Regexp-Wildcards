@@ -11,11 +11,11 @@ Regexp::Wildcards - Converts wildcard expressions to Perl regular expressions.
 
 =head1 VERSION
 
-Version 0.07
+Version 0.08
 
 =cut
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 =head1 SYNOPSIS
 
@@ -233,12 +233,15 @@ These five functions are exported only on request : C<wc2re>, C<wc2re_unix>, C<w
 
 use base qw/Exporter/;
 
-our @EXPORT      = ();
-our @EXPORT_OK   = ('wc2re', map { 'wc2re_'.$_ } keys %types);
-our @EXPORT_FAIL = qw/extract/,
-                   (map { 'do_'.$_ } qw/jokers sql commas brackets bracketed/),
-                   (map { 'capture_'.$_ } qw/single any brackets/);
-our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
+our @EXPORT         = ();
+our %EXPORT_TAGS    = (
+ 'funcs' =>  [ 'wc2re', map { 'wc2re_'.$_ } keys %types ],
+);
+our @EXPORT_OK      = map { @$_ } values %EXPORT_TAGS;
+our @EXPORT_FAIL    = qw/extract/,
+                    (map { 'do_'.$_ } qw/jokers sql commas brackets bracketed/),
+                    (map { 'capture_'.$_ } qw/single any brackets/);
+$EXPORT_TAGS{'all'} = [ @EXPORT_OK ];
 
 =head1 DEPENDENCIES
 
@@ -260,17 +263,13 @@ L<Text::Buffer> has the C<convertWildcardToRegex> class method that handles joke
 
 =head1 AUTHOR
 
-Vincent Pit, C<< <perl at profvince.com> >>
+Vincent Pit, C<< <perl at profvince.com> >>, L<http://www.profvince.com>.
 
-You can contact me by mail or on #perl @ FreeNode (Prof_Vince).
+You can contact me by mail or on #perl @ FreeNode (vincent or Prof_Vince).
 
 =head1 BUGS
 
-Please report any bugs or feature requests to
-C<bug-regexp-wildcards at rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Regexp-Wildcards>.
-I will be notified, and then you'll automatically be notified of progress on
-your bug as I make changes.
+Please report any bugs or feature requests to C<bug-regexp-wildcards at rt.cpan.org>, or through the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Regexp-Wildcards>. I will be notified, and then you'll automatically be notified of progress on your bug as I make changes.
 
 =head1 SUPPORT
 
@@ -280,7 +279,7 @@ You can find documentation for this module with the perldoc command.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2007 Vincent Pit, all rights reserved.
+Copyright 2007-2008 Vincent Pit, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

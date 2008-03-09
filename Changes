@@ -1,5 +1,12 @@
 Revision history for Regexp-Wildcards
 
+0.08    2008-03-09 15:55  UTC
+        + Add : ':funcs' export tag.
+        + Doc : Copyright update.
+        + Fix : Correct dependencies listing in META.yml.
+        + Tst : Author tests overhaul.
+        + Tst : t/95-portability-files.t. 
+
 0.07    2007-08-28 12:35 UTC
         + Fix : Tests are now strict.
         + Fix : Complete dependencies.
