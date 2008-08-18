@@ -3,179 +3,163 @@ NAME
     expressions.
 
 VERSION
-    Version 0.08
+    Version 1.00
 
 SYNOPSIS
-        use Regexp::Wildcards qw/wc2re/;
+        use Regexp::Wildcards;
+
+        my $rw = Regexp::Wildcards->new(type => 'unix');
 
         my $re;
-        $re = wc2re 'a{b?,c}*' => 'unix';   # Do it Unix style.
-        $re = wc2re 'a?,b*'    => 'win32';  # Do it Windows style.
-        $re = wc2re '*{x,y}?'  => 'jokers'; # Process the jokers & escape the rest.
-        $re = wc2re '%a_c%'    => 'sql';    # Turn SQL wildcards into regexps.
+        $re = $rw->convert('a{b?,c}*');          # Do it Unix shell style.
+        $re = $rw->convert('a?,b*',   'win32');  # Do it Windows shell style.
+        $re = $rw->convert('*{x,y}?', 'jokers'); # Process the jokers and escape the rest.
+        $re = $rw->convert('%a_c%',   'sql');   # Turn SQL wildcards into regexps.
+
+        $rw = Regexp::Wildcards->new(
+         do      => [ qw/jokers brackets/ ], # Do jokers and brackets.
+         capture => [ qw/any greedy/ ],      # Capture *'s greedily.
+        );
+
+        $rw->do(add => 'groups');            # Don't escape groups.
+        $rw->capture(rem => [ qw/greedy/ ]); # Actually we want non-greedy matches.
+        $re = $rw->convert('*a{,(b)?}?c*');  # '(.*?)a(?:|(b).).c(.*?)'
+        $rw->capture();                      # No more captures.
 
 DESCRIPTION
     In many situations, users may want to specify patterns to match but
     don't need the full power of regexps. Wildcards make one of those sets
     of simplified rules. This module converts wildcard expressions to Perl
-    regular expressions, so that you can use them for matching. It handles
-    the "*" and "?" shell jokers, as well as Unix bracketed alternatives
-    "{,}", but also "%" and "_" SQL wildcards. Backspace ("\") is used as an
-    escape character. Wrappers are provided to mimic the behaviour of
-    Windows and Unix shells.
+    regular expressions, so that you can use them for matching.
 
-VARIABLES
-    These variables control if the wildcards jokers and brackets must
-    capture their match. They can be globally set by writing in your program
+    It handles the "*" and "?" jokers, as well as Unix bracketed
+    alternatives "{,}", but also "%" and "_" SQL wildcards. It can also keep
+    original "(...)" groups. Backspace ("\") is used as an escape character.
 
-        $Regexp::Wildcards::CaptureSingle = 1;
-        # From then, "exactly one" wildcards are capturing
+    Typesets that mimic the behaviour of Windows and Unix shells are also
+    provided.
 
-    or can be locally specified via "local"
+METHODS
+  "new [ do => $what | type => $type ], capture => $captures"
+    Constructs a new Regexp::Wildcard object.
 
-        {
-         local $Regexp::Wildcards::CaptureSingle = 1;
-         # In this block, "exactly one" wildcards are capturing.
-         ...
-        }
-        # Back to the situation from before the block
+    "do" lists all features that should be enabled when converting wildcards
+    to regexps. Refer to "do" for details on what can be passed in $what.
 
-    This section describes also how those elements are translated by the
-    functions.
+    The "type" specifies a predefined set of "do" features to use. See
+    "type" for details on which types are valid. The "do" option overrides
+    "type".
 
-  $CaptureSingle
-    When this variable is true, each occurence of unescaped *"exactly one"*
-    wildcards (i.e. "?" jokers or "_" for SQL wildcards) are made capturing
-    in the resulting regexp (they are be replaced by "(.)"). Otherwise, they
-    are just replaced by ".". Default is the latter.
+    "capture" lists which atoms should be capturing. Refer to "capture" for
+    more details.
 
-        For jokers :
-        'a???b\\??' is translated to 'a(.)(.)(.)b\\?(.)' if $CaptureSingle is true
-                                     'a...b\\?.'         otherwise (default)
+  "do [ $what | set => $c1, add => $c2, rem => $c3 ]"
+    Specifies the list of metacharacters to convert. They are classified
+    into five classes :
 
-        For SQL wildcards :
-        'a___b\\__' is translated to 'a(.)(.)(.)b\\_(.)' if $CaptureSingle is true
-                                     'a...b\\_.'         otherwise (default)
+    'jokers' converts "?" to "." and "*" to ".*" ;
+            'a**\\*b??\\?c' ==> 'a.*\\*b..\\?c'
 
-  $CaptureAny
-    By default this variable is false, and successions of unescaped *"any"*
-    wildcards (i.e. "*" jokers or "%" for SQL wildcards) are replaced by one
-    single ".*". When it evalutes to true, those sequences of *"any"*
-    wildcards are made into one capture, which is greedy ("(.*)") for
-    "$CaptureAny > 0" and otherwise non-greedy ("(.*?)").
+    'sql' converts "_" to "." and "%" to ".*" ;
+            'a%%\\%b__\\_c' ==> 'a.*\\%b..\\_c'
 
-        For jokers :
-        'a***b\\**' is translated to 'a.*b\\*.*'       if $CaptureAny is false (default)
-                                     'a(.*)b\\*(.*)'   if $CaptureAny > 0
-                                     'a(.*?)b\\*(.*?)' otherwise
+    'commas' converts all "," to "|" and puts the complete resulting regular
+    expression inside "(?: ... )" ;
+            'a,b{c,d},e' ==> '(?:a|b\\{c|d\\}|e)'
 
-        For SQL wildcards :
-        'a%%%b\\%%' is translated to 'a.*b\\%.*'       if $CaptureAny is false (default)
-                                     'a(.*)b\\%(.*)'   if $CaptureAny > 0
-                                     'a(.*?)b\\%(.*?)' otherwise
+    'brackets' converts all matching "{ ... , ... }" brackets to "(?: ... |
+    ... )" alternations. If some brackets are unbalanced, it tries to
+    substitute as many of them as possible, and then escape the remaining
+    unmatched "{" and "}". Commas outside of any bracket-delimited block are
+    also escaped ;
+            'a,b{c,d},e'    ==> 'a\\,b(?:c|d)\\,e'
+            '{a\\{b,c}d,e}' ==> '(?:a\\{b|c)d\\,e\\}'
+            '{a{b,c\\}d,e}' ==> '\\{a\\{b\\,c\\}d\\,e\\}'
 
-  $CaptureBrackets
-    If this variable is set to true, valid brackets constructs are made into
-    "( | )" captures, and otherwise they are replaced by non-capturing
-    alternations ("(?: | ")), which is the default.
+    'groups' keeps the parenthesis "( ... )" of the original string without
+    escaping them. Currently, no check is done to ensure that the
+    parenthesis are matching.
+            'a(b(c))d\\(\\)' ==> (no change)
 
-        'a{b\\},\\{c}' is translated to 'a(b\\}|\\{c)'   if $CaptureBrackets is true
-                                        'a(?:b\\}|\\{c)' otherwise (default)
+    Each $c can be any of :
 
-FUNCTIONS
-  "wc2re_jokers"
-    This function takes as its only argument the wildcard string to process,
-    and returns the corresponding regular expression where the jokers "?"
-    (*"exactly one"*) and "*" (*"any"*) have been translated into their
-    regexp equivalents (see "VARIABLES" for more details). All other
-    unprotected regexp metacharacters are escaped.
+    A hash reference, with wanted metacharacter group names (described
+    above) as keys and booleans as values ;
+    An array reference containing the list of wanted metacharacter classes ;
+    A plain scalar, when only one group is required.
 
-        # Everything is escaped.
-        print 'ok' if wc2re_jokers('{a{b,c}d,e}') eq '\\{a\\{b\\,c\\}d\\,e\\}';
+    When "set" is present, the classes given as its value replace the
+    current object options. Then the "add" classes are added, and the "rem"
+    classes removed.
 
-  "wc2re_sql"
-    Similar to the precedent, but for the SQL wildcards "_" (*"exactly
-    one"*) and "%" (*"any"*). All other unprotected regexp metacharacters
-    are escaped.
+    Passing a sole scalar $what is equivalent as passing "set => $what". No
+    argument means "set => [ ]".
 
-  "wc2re_unix"
-    This function conforms to standard Unix shell wildcard rules. It
-    successively escapes all unprotected regexp special characters that
-    doesn't hold any meaning for wildcards, turns "?" and "*" jokers into
-    their regexp equivalents (see "wc2re_jokers"), and changes bracketed
-    blocks into (possibly capturing) alternations as described in
-    "VARIABLES". If brackets are unbalanced, it tries to substitute as many
-    of them as possible, and then escape the remaining "{" and "}". Commas
-    outside of any bracket-delimited block are also escaped.
+        $rw->do(set => 'jokers');           # Only translate jokers.
+        $rw->do('jokers');                  # Same.
+        $rw->do(add => [ qw/sql commas/ ]); # Translate also SQL and commas.
+        $rw->do(rem => 'jokers');           # Specifying both 'sql' and 'jokers' is useless.
+        $rw->do();                          # Translate nothing.
 
-        # This is a valid bracket expression, and is completely translated.
-        print 'ok' if wc2re_unix('{a{b,c}d,e}') eq '(?:a(?:b|c)d|e)';
+  "type $type"
+    Notifies to convert the metacharacters that corresponds to the
+    predefined type $type. $type can be any of 'jokers', 'sql', 'commas',
+    'brackets', 'win32' or 'unix'. An unknown or undefined value defaults to
+    'unix', except for 'dos', 'os2', 'MSWin32' and 'cygwin' that default to
+    'win32'. This means that you can pass $^O as the $type and get the
+    corresponding shell behaviour. Returns the object.
 
-    The function handles unbalanced bracket expressions, by escaping
-    everything it can't recognize. For example :
+        $rw->type('win32'); # Set type to win32.
+        $rw->type();        # Set type to unix.
 
-        # The first comma is replaced, and the remaining brackets and comma are escaped.
-        print 'ok' if wc2re_unix('{a\\{b,c}d,e}') eq '(?:a\\{b|c)d\\,e\\}';
+  "capture [ $captures | set => $c1, add => $c2, rem => $c3 ]"
+    Specifies the list of atoms to capture. This method works like "do",
+    except that the classes are different :
 
-        # All the brackets and commas are escaped.
-        print 'ok' if wc2re_unix('{a{b,c\\}d,e}') eq '\\{a\\{b\\,c\\}d\\,e\\}';
+    'single' will capture all unescaped *"exactly one"* metacharacters, i.e.
+    "?" for wildcards or "_" for SQL ;
+            'a???b\\??' ==> 'a(.)(.)(.)b\\?(.)'
+            'a___b\\__' ==> 'a(.)(.)(.)b\\_(.)'
 
-  "wc2re_win32"
-    This one works just like the one before, but for Windows wildcards.
-    Bracketed blocks are no longer handled (which means that brackets are
-    escaped), but you can provide a comma-separated list of items.
+    'any' will capture all unescaped *"any"* metacharacters, i.e. "*" for
+    wildcards or "%" for SQL ;
+            'a***b\\**' ==> 'a(.*)b\\*(.*)'
+            'a%%%b\\%%' ==> 'a(.*)b\\%(.*)'
 
-        # All the brackets are escaped, and commas are seen as list delimiters.
-        print 'ok' if wc2re_win32('{a{b,c}d,e}') eq '(?:\\{a\\{b|c\\}d|e\\})';
+    'greedy', when used in conjunction with 'any', will make the 'any'
+    captures greedy (by default they are not) ;
+            'a***b\\**' ==> 'a(.*?)b\\*(.*?)'
+            'a%%%b\\%%' ==> 'a(.*?)b\\%(.*?)'
 
-  "wc2re"
-    A generic function that wraps around all the different rules. The first
-    argument is the wildcard expression, and the second one is the type of
-    rules to apply which can be :
+    'brackets' will capture matching "{ ... , ... }" alternations.
+            'a{b\\},\\{c}' ==> 'a(b\\}|\\{c)'
 
-    'unix', 'win32', 'jokers', 'sql'
-        For one of those raw rule names, "wc2re" simply maps to
-        "wc2re_unix", "wc2re_win32", "wc2re_jokers" and "wc2re_sql"
-        respectively.
+        $rw->capture(set => 'single');           # Only capture "exactly one" metacharacters.
+        $rw->capture('single');                  # Same.
+        $rw->capture(add => [ qw/any greedy/ ]); # Also greedily capture "any" metacharacters.
+        $rw->capture(rem => 'greedy');           # No more greed please.
+        $rw->capture();                          # Capture nothing.
 
-    $^O If you supply the Perl operating system name, the call is deferred
-        to "wc2re_win32" for $^O equal to 'dos', 'os2', 'MSWin32' or
-        'cygwin', and to "wc2re_unix" in all the other cases.
-
-    If the type is undefined or not supported, it defaults to 'unix'.
-
-         # Wraps to wc2re_jokers ($re eq 'a\\{b\\,c\\}.*').
-         $re = wc2re 'a{b,c}*' => 'jokers';
-
-         # Wraps to wc2re_win32 ($re eq '(?:a\\{b|c\\}.*)')
-         #       or wc2re_unix  ($re eq 'a(?:b|c).*')       depending on $^O.
-         $re = wc2re 'a{b,c}*' => $^O;
+  "convert $wc [ , $type ]"
+    Converts the wildcard expression $wc into a regular expression according
+    to the options stored into the Regexp::Wildcards object, or to $type if
+    it's supplied. It successively escapes all unprotected regexp special
+    characters that doesn't hold any meaning for wildcards, then replace
+    'jokers' or 'sql' and 'commas' or 'brackets' (depending on the "do" or
+    "type" options), all of this by applying the 'capture' rules specified
+    in the constructor or by "capture".
 
 EXPORT
-    These five functions are exported only on request : "wc2re",
-    "wc2re_unix", "wc2re_win32", "wc2re_jokers" and "wc2re_sql". The
-    variables are not exported.
+    An object module shouldn't export any function, and so does this one.
 
 DEPENDENCIES
-    Text::Balanced, which is bundled with perl since version 5.7.3
+    Carp (core module since perl 5), Text::Balanced (since 5.7.3).
 
 CAVEATS
     This module does not implement the strange behaviours of Windows shell
     that result from the special handling of the three last characters (for
     the file extension). For example, Windows XP shell matches *a like
     ".*a", "*a?" like ".*a.?", "*a??" like ".*a.{0,2}" and so on.
-
-SEE ALSO
-    Some modules provide incomplete alternatives as helper functions :
-
-    Net::FTPServer has a method for that. Only jokers are translated, and
-    escaping won't preserve them.
-
-    File::Find::Match::Util has a "wildcard" function that compiles a
-    matcher. It only handles "*".
-
-    Text::Buffer has the "convertWildcardToRegex" class method that handles
-    jokers.
 
 AUTHOR
     Vincent Pit, "<perl at profvince.com>", <http://www.profvince.com>.
@@ -194,6 +178,9 @@ SUPPORT
     You can find documentation for this module with the perldoc command.
 
         perldoc Regexp::Wildcards
+
+    Tests code coverage report is available at
+    <http://www.profvince.com/perl/cover/Regexp-Wildcards>.
 
 COPYRIGHT & LICENSE
     Copyright 2007-2008 Vincent Pit, all rights reserved.

@@ -25,6 +25,7 @@ WriteMakefile(
     ABSTRACT_FROM => 'lib/Regexp/Wildcards.pm',
     PL_FILES      => {},
     PREREQ_PM     => {
+        'Carp'           => 0,
         'Exporter'       => 0,
         'Text::Balanced' => 0,
     },
@@ -33,5 +34,5 @@ WriteMakefile(
                       . build_req,
         COMPRESS   => 'gzip -9f', SUFFIX => 'gz'
     },
-    clean         => { FILES => 'Regexp-Wildcards-*' },
+    clean         => { FILES => 'Regexp-Wildcards-* *.gcov *.gcda *.gcno cover_db Debian_CPANTS.txt' },
 );

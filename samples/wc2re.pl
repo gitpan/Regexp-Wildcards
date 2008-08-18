@@ -3,14 +3,16 @@
 use strict;
 use warnings;
 
-use Regexp::Wildcards qw/wc2re/;
+use lib qw{blib/lib};
 
-my $type = (grep $^O eq $_, qw/dos os2 MSWin32 cygwin/) ? 'win32' : 'unix';
-print "For this system, type is $type\n";
+use Regexp::Wildcards;
+use Data::Dumper;
 
-{
- local $Regexp::Wildcards::CaptureBrackets = 1;
- local $Regexp::Wildcards::CaptureAny = -1;
- print $_, ' => ', wc2re($_ => $^O), "\n" for @ARGV;
-}
+my $rw = Regexp::Wildcards->new(
+ do      => [ qw/brackets/ ],
+ capture => [ qw/single/ ],
+);
+$rw->do(add => [ qw/jokers/ ]);
+$rw->capture(add => [ qw/brackets any greedy/ ]);
 
+print $_, ' => ', $rw->convert($_), "\n" for @ARGV;
