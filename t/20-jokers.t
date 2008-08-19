@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 2 * (4 + 2 + 7 + 9 + 2) * 3;
+use Test::More tests => 2 * (4 + 2 + 7 + 8 + 6 + 2) * 3;
 
 use Regexp::Wildcards;
 
@@ -78,14 +78,20 @@ sub alltests {
  # Escaping
 
  try $rw, "escaping $any", '\\'.$any;
+ try $rw, "escaping $any before intermediate newline", '\\'.$any ."\n\\".$any;
  try $rw, "escaping $one", '\\'.$one;
+ try $rw, "escaping $one before intermediate newline", '\\'.$one ."\n\\".$one;
  try $rw, "escaping \\\\\\$any", '\\\\\\'.$any;
  try $rw, "escaping \\\\\\$one", '\\\\\\'.$one;
-
  try $rw, "not escaping \\\\$any", '\\\\'.$any, '\\\\.*';
  try $rw, "not escaping \\\\$one", '\\\\'.$one, '\\\\.';
 
+ # Escaping escapes
+
  try $rw, 'escaping \\', '\\', '\\\\';
+ try $rw, 'not escaping \\', '\\\\', '\\\\';
+ try $rw, 'escaping \\ before intermediate newline', "\\\n\\", "\\\\\n\\\\";
+ try $rw, 'not escaping \\ before intermediate newline', "\\\\\n\\\\", "\\\\\n\\\\";
  try $rw, 'escaping regex characters', '[]', '\\[\\]';
  try $rw, 'not escaping escaped regex characters', '\\\\\\[\\]';
 

@@ -12,13 +12,13 @@ Regexp::Wildcards - Converts wildcard expressions to Perl regular expressions.
 
 =head1 VERSION
 
-Version 1.00
+Version 1.01
 
 =cut
 
 use vars qw/$VERSION/;
 BEGIN {
- $VERSION = '1.00';
+ $VERSION = '1.01';
 }
 
 =head1 SYNOPSIS
@@ -31,7 +31,7 @@ BEGIN {
     $re = $rw->convert('a{b?,c}*');          # Do it Unix shell style.
     $re = $rw->convert('a?,b*',   'win32');  # Do it Windows shell style.
     $re = $rw->convert('*{x,y}?', 'jokers'); # Process the jokers and escape the rest.
-    $re = $rw->convert('%a_c%',   'sql');   # Turn SQL wildcards into regexps.
+    $re = $rw->convert('%a_c%',   'sql');    # Turn SQL wildcards into regexps.
 
     $rw = Regexp::Wildcards->new(
      do      => [ qw/jokers brackets/ ], # Do jokers and brackets.
@@ -208,25 +208,35 @@ They are classified into five classes :
 
 =over 4
 
-=item C<'jokers'> converts C<?> to C<.> and C<*> to C<.*> ;
+=item *
+
+C<'jokers'> converts C<?> to C<.> and C<*> to C<.*> ;
 
     'a**\\*b??\\?c' ==> 'a.*\\*b..\\?c'
 
-=item C<'sql'> converts C<_> to C<.> and C<%> to C<.*> ;
+=item *
+
+C<'sql'> converts C<_> to C<.> and C<%> to C<.*> ;
 
     'a%%\\%b__\\_c' ==> 'a.*\\%b..\\_c'
 
-=item C<'commas'> converts all C<,> to C<|> and puts the complete resulting regular expression inside C<(?: ... )> ;
+=item *
+
+C<'commas'> converts all C<,> to C<|> and puts the complete resulting regular expression inside C<(?: ... )> ;
 
     'a,b{c,d},e' ==> '(?:a|b\\{c|d\\}|e)'
 
-=item C<'brackets'> converts all matching C<{ ... ,  ... }> brackets to C<(?: ... | ... )> alternations. If some brackets are unbalanced, it tries to substitute as many of them as possible, and then escape the remaining unmatched C<{> and C<}>. Commas outside of any bracket-delimited block are also escaped ;
+=item *
+
+C<'brackets'> converts all matching C<{ ... ,  ... }> brackets to C<(?: ... | ... )> alternations. If some brackets are unbalanced, it tries to substitute as many of them as possible, and then escape the remaining unmatched C<{> and C<}>. Commas outside of any bracket-delimited block are also escaped ;
 
     'a,b{c,d},e'    ==> 'a\\,b(?:c|d)\\,e'
     '{a\\{b,c}d,e}' ==> '(?:a\\{b|c)d\\,e\\}'
     '{a{b,c\\}d,e}' ==> '\\{a\\{b\\,c\\}d\\,e\\}'
 
-=item C<'groups'> keeps the parenthesis C<( ... )> of the original string without escaping them. Currently, no check is done to ensure that the parenthesis are matching.
+=item *
+
+C<'groups'> keeps the parenthesis C<( ... )> of the original string without escaping them. Currently, no check is done to ensure that the parenthesis are matching.
 
     'a(b(c))d\\(\\)' ==> (no change)
 
@@ -236,11 +246,17 @@ Each C<$c> can be any of :
 
 =over 4
 
-=item A hash reference, with wanted metacharacter group names (described above) as keys and booleans as values ;
+=item *
 
-=item An array reference containing the list of wanted metacharacter classes ;
+A hash reference, with wanted metacharacter group names (described above) as keys and booleans as values ;
 
-=item A plain scalar, when only one group is required.
+=item *
+
+An array reference containing the list of wanted metacharacter classes ;
+
+=item *
+
+A plain scalar, when only one group is required.
 
 =back
 
@@ -269,22 +285,30 @@ This method works like L</do>, except that the classes are different :
 
 =over 4
 
-=item C<'single'> will capture all unescaped I<"exactly one"> metacharacters, i.e. C<?> for wildcards or C<_> for SQL ;
+=item *
+
+C<'single'> will capture all unescaped I<"exactly one"> metacharacters, i.e. C<?> for wildcards or C<_> for SQL ;
 
     'a???b\\??' ==> 'a(.)(.)(.)b\\?(.)'
     'a___b\\__' ==> 'a(.)(.)(.)b\\_(.)'
 
-=item C<'any'> will capture all unescaped I<"any"> metacharacters, i.e. C<*> for wildcards or C<%> for SQL ;
+=item *
+
+C<'any'> will capture all unescaped I<"any"> metacharacters, i.e. C<*> for wildcards or C<%> for SQL ;
 
     'a***b\\**' ==> 'a(.*)b\\*(.*)'
     'a%%%b\\%%' ==> 'a(.*)b\\%(.*)'
 
-=item C<'greedy'>, when used in conjunction with C<'any'>, will make the C<'any'> captures greedy (by default they are not) ;
+=item *
+
+C<'greedy'>, when used in conjunction with C<'any'>, will make the C<'any'> captures greedy (by default they are not) ;
 
     'a***b\\**' ==> 'a(.*?)b\\*(.*?)'
     'a%%%b\\%%' ==> 'a(.*?)b\\%(.*?)'
 
-=item C<'brackets'> will capture matching C<{ ... , ... }> alternations.
+=item *
+
+C<'brackets'> will capture matching C<{ ... , ... }> alternations.
 
     'a{b\\},\\{c}' ==> 'a(b\\}|\\{c)'
 
@@ -315,8 +339,11 @@ sub convert {
  my $do = $config->{do};
  my $e  = $config->{escape};
  $wc =~ s/(?<!\\)((?:\\\\)*[^\w\s\\$e])/\\$1/g;
- return $self->_sql($wc)   if $do->{sql};
- $wc = $self->_jokers($wc) if $do->{jokers};
+ if ($do->{jokers}) {
+  $wc = $self->_jokers($wc);
+ } elsif ($do->{sql}) {
+  $wc = $self->_sql($wc);
+ }
  if ($do->{brackets}) {
   $wc = $self->_bracketed($wc);
  } elsif ($do->{commas}) {

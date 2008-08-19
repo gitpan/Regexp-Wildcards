@@ -13,7 +13,7 @@ is($rw->convert('a,b,c'), 'a\\,b\\,c', 'unix: commas outside of brackets 1');
 is($rw->convert('a\\,b\\\\\\,c'), 'a\\,b\\\\\\,c',
    'unix: commas outside of brackets 2');
 is($rw->convert(',a,b,c\\\\,'), '\\,a\\,b\\,c\\\\\\,',
-   'unix: commas outside of brackets at begin/ed');
+   'unix: commas outside of brackets at begin/end');
 
 $rw = Regexp::Wildcards->new(type => 'commas');
 

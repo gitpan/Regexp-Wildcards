@@ -3,7 +3,7 @@ NAME
     expressions.
 
 VERSION
-    Version 1.00
+    Version 1.01
 
 SYNOPSIS
         use Regexp::Wildcards;
@@ -14,7 +14,7 @@ SYNOPSIS
         $re = $rw->convert('a{b?,c}*');          # Do it Unix shell style.
         $re = $rw->convert('a?,b*',   'win32');  # Do it Windows shell style.
         $re = $rw->convert('*{x,y}?', 'jokers'); # Process the jokers and escape the rest.
-        $re = $rw->convert('%a_c%',   'sql');   # Turn SQL wildcards into regexps.
+        $re = $rw->convert('%a_c%',   'sql');    # Turn SQL wildcards into regexps.
 
         $rw = Regexp::Wildcards->new(
          do      => [ qw/jokers brackets/ ], # Do jokers and brackets.
@@ -57,36 +57,44 @@ METHODS
     Specifies the list of metacharacters to convert. They are classified
     into five classes :
 
-    'jokers' converts "?" to "." and "*" to ".*" ;
+    *   'jokers' converts "?" to "." and "*" to ".*" ;
+
             'a**\\*b??\\?c' ==> 'a.*\\*b..\\?c'
 
-    'sql' converts "_" to "." and "%" to ".*" ;
+    *   'sql' converts "_" to "." and "%" to ".*" ;
+
             'a%%\\%b__\\_c' ==> 'a.*\\%b..\\_c'
 
-    'commas' converts all "," to "|" and puts the complete resulting regular
-    expression inside "(?: ... )" ;
+    *   'commas' converts all "," to "|" and puts the complete resulting
+        regular expression inside "(?: ... )" ;
+
             'a,b{c,d},e' ==> '(?:a|b\\{c|d\\}|e)'
 
-    'brackets' converts all matching "{ ... , ... }" brackets to "(?: ... |
-    ... )" alternations. If some brackets are unbalanced, it tries to
-    substitute as many of them as possible, and then escape the remaining
-    unmatched "{" and "}". Commas outside of any bracket-delimited block are
-    also escaped ;
+    *   'brackets' converts all matching "{ ... , ... }" brackets to "(?:
+        ... | ... )" alternations. If some brackets are unbalanced, it tries
+        to substitute as many of them as possible, and then escape the
+        remaining unmatched "{" and "}". Commas outside of any
+        bracket-delimited block are also escaped ;
+
             'a,b{c,d},e'    ==> 'a\\,b(?:c|d)\\,e'
             '{a\\{b,c}d,e}' ==> '(?:a\\{b|c)d\\,e\\}'
             '{a{b,c\\}d,e}' ==> '\\{a\\{b\\,c\\}d\\,e\\}'
 
-    'groups' keeps the parenthesis "( ... )" of the original string without
-    escaping them. Currently, no check is done to ensure that the
-    parenthesis are matching.
+    *   'groups' keeps the parenthesis "( ... )" of the original string
+        without escaping them. Currently, no check is done to ensure that
+        the parenthesis are matching.
+
             'a(b(c))d\\(\\)' ==> (no change)
 
     Each $c can be any of :
 
-    A hash reference, with wanted metacharacter group names (described
-    above) as keys and booleans as values ;
-    An array reference containing the list of wanted metacharacter classes ;
-    A plain scalar, when only one group is required.
+    *   A hash reference, with wanted metacharacter group names (described
+        above) as keys and booleans as values ;
+
+    *   An array reference containing the list of wanted metacharacter
+        classes ;
+
+    *   A plain scalar, when only one group is required.
 
     When "set" is present, the classes given as its value replace the
     current object options. Then the "add" classes are added, and the "rem"
@@ -116,22 +124,26 @@ METHODS
     Specifies the list of atoms to capture. This method works like "do",
     except that the classes are different :
 
-    'single' will capture all unescaped *"exactly one"* metacharacters, i.e.
-    "?" for wildcards or "_" for SQL ;
+    *   'single' will capture all unescaped *"exactly one"* metacharacters,
+        i.e. "?" for wildcards or "_" for SQL ;
+
             'a???b\\??' ==> 'a(.)(.)(.)b\\?(.)'
             'a___b\\__' ==> 'a(.)(.)(.)b\\_(.)'
 
-    'any' will capture all unescaped *"any"* metacharacters, i.e. "*" for
-    wildcards or "%" for SQL ;
+    *   'any' will capture all unescaped *"any"* metacharacters, i.e. "*"
+        for wildcards or "%" for SQL ;
+
             'a***b\\**' ==> 'a(.*)b\\*(.*)'
             'a%%%b\\%%' ==> 'a(.*)b\\%(.*)'
 
-    'greedy', when used in conjunction with 'any', will make the 'any'
-    captures greedy (by default they are not) ;
+    *   'greedy', when used in conjunction with 'any', will make the 'any'
+        captures greedy (by default they are not) ;
+
             'a***b\\**' ==> 'a(.*?)b\\*(.*?)'
             'a%%%b\\%%' ==> 'a(.*?)b\\%(.*?)'
 
-    'brackets' will capture matching "{ ... , ... }" alternations.
+    *   'brackets' will capture matching "{ ... , ... }" alternations.
+
             'a{b\\},\\{c}' ==> 'a(b\\}|\\{c)'
 
         $rw->capture(set => 'single');           # Only capture "exactly one" metacharacters.
