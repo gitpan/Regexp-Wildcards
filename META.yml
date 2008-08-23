@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                Regexp-Wildcards
-version:             1.01
+version:             1.02
 abstract:            Converts wildcard expressions to Perl regular expressions.
 license:             perl
 author:              

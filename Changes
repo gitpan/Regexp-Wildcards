@@ -1,5 +1,8 @@
 Revision history for Regexp-Wildcards
 
+1.02    2008-08-23 09:15 UTC
+        + Add : The 'anchor' metacharacter class.
+
 1.01    2008-08-19 15:20 UTC
         + Fix : Now we can do both SQL and brackets.
         + Tst : Add tests for embedded newlines.

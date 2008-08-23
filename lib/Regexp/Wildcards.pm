@@ -12,13 +12,13 @@ Regexp::Wildcards - Converts wildcard expressions to Perl regular expressions.
 
 =head1 VERSION
 
-Version 1.01
+Version 1.02
 
 =cut
 
 use vars qw/$VERSION/;
 BEGIN {
- $VERSION = '1.01';
+ $VERSION = '1.02';
 }
 
 =head1 SYNOPSIS
@@ -47,7 +47,7 @@ BEGIN {
 
 In many situations, users may want to specify patterns to match but don't need the full power of regexps. Wildcards make one of those sets of simplified rules. This module converts wildcard expressions to Perl regular expressions, so that you can use them for matching.
 
-It handles the C<*> and C<?> jokers, as well as Unix bracketed alternatives C<{,}>, but also C<%> and C<_> SQL wildcards. It can also keep original C<(...)> groups. Backspace (C<\>) is used as an escape character.
+It handles the C<*> and C<?> jokers, as well as Unix bracketed alternatives C<{,}>, but also C<%> and C<_> SQL wildcards. If required, it can also keep original C<(...)> groups or C<^> and C<$> anchors. Backspace (C<\>) is used as an escape character.
 
 Typesets that mimic the behaviour of Windows and Unix shells are also provided.
 
@@ -76,6 +76,7 @@ my %escapes = (
  commas   => ',',
  brackets => '{},',
  groups   => '()',
+ anchors  => '^$',
 );
 
 my %captures = (
@@ -203,8 +204,8 @@ C<capture> lists which atoms should be capturing. Refer to L</capture> for more 
 
 =head2 C<< do [ $what E<verbar> set => $c1, add => $c2, rem => $c3 ] >>
 
-Specifies the list of metacharacters to convert.
-They are classified into five classes :
+Specifies the list of metacharacters to convert or to prevent for escaping.
+They fit into six classes :
 
 =over 4
 
@@ -239,6 +240,12 @@ C<'brackets'> converts all matching C<{ ... ,  ... }> brackets to C<(?: ... | ..
 C<'groups'> keeps the parenthesis C<( ... )> of the original string without escaping them. Currently, no check is done to ensure that the parenthesis are matching.
 
     'a(b(c))d\\(\\)' ==> (no change)
+
+=item *
+
+C<'anchors'> prevents the I<beginning-of-line> C<^> and I<end-of-line> C<$> anchors to be escaped. Since C<[...]> character class are currently escaped, a C<^> will always be interpreted as I<beginning-of-line>.
+
+    'a^b$c' ==> (no change)
 
 =back
 
