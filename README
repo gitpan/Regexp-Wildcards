@@ -3,7 +3,7 @@ NAME
     expressions.
 
 VERSION
-    Version 1.02
+    Version 1.03
 
 SYNOPSIS
         use Regexp::Wildcards;
@@ -58,38 +58,50 @@ METHODS
     Specifies the list of metacharacters to convert or to prevent for
     escaping. They fit into six classes :
 
-    *   'jokers' converts "?" to "." and "*" to ".*" ;
+    *   'jokers'
+
+        Converts "?" to "." and "*" to ".*".
 
             'a**\\*b??\\?c' ==> 'a.*\\*b..\\?c'
 
-    *   'sql' converts "_" to "." and "%" to ".*" ;
+    *   'sql'
+
+        Converts "_" to "." and "%" to ".*".
 
             'a%%\\%b__\\_c' ==> 'a.*\\%b..\\_c'
 
-    *   'commas' converts all "," to "|" and puts the complete resulting
-        regular expression inside "(?: ... )" ;
+    *   'commas'
+
+        Converts all "," to "|" and puts the complete resulting regular
+        expression inside "(?: ... )".
 
             'a,b{c,d},e' ==> '(?:a|b\\{c|d\\}|e)'
 
-    *   'brackets' converts all matching "{ ... , ... }" brackets to "(?:
-        ... | ... )" alternations. If some brackets are unbalanced, it tries
-        to substitute as many of them as possible, and then escape the
+    *   'brackets'
+
+        Converts all matching "{ ... , ... }" brackets to "(?: ... | ... )"
+        alternations. If some brackets are unbalanced, it tries to
+        substitute as many of them as possible, and then escape the
         remaining unmatched "{" and "}". Commas outside of any
-        bracket-delimited block are also escaped ;
+        bracket-delimited block are also escaped.
 
             'a,b{c,d},e'    ==> 'a\\,b(?:c|d)\\,e'
             '{a\\{b,c}d,e}' ==> '(?:a\\{b|c)d\\,e\\}'
             '{a{b,c\\}d,e}' ==> '\\{a\\{b\\,c\\}d\\,e\\}'
 
-    *   'groups' keeps the parenthesis "( ... )" of the original string
-        without escaping them. Currently, no check is done to ensure that
-        the parenthesis are matching.
+    *   'groups'
+
+        Keeps the parenthesis "( ... )" of the original string without
+        escaping them. Currently, no check is done to ensure that the
+        parenthesis are matching.
 
             'a(b(c))d\\(\\)' ==> (no change)
 
-    *   'anchors' prevents the *beginning-of-line* "^" and *end-of-line* "$"
-        anchors to be escaped. Since "[...]" character class are currently
-        escaped, a "^" will always be interpreted as *beginning-of-line*.
+    *   'anchors'
+
+        Prevents the *beginning-of-line* "^" and *end-of-line* "$" anchors
+        to be escaped. Since "[...]" character class are currently escaped,
+        a "^" will always be interpreted as *beginning-of-line*.
 
             'a^b$c' ==> (no change)
 
@@ -116,40 +128,78 @@ METHODS
         $rw->do(rem => 'jokers');           # Specifying both 'sql' and 'jokers' is useless.
         $rw->do();                          # Translate nothing.
 
+    The "do" method returns the Regexp::Wildcards object.
+
   "type $type"
     Notifies to convert the metacharacters that corresponds to the
-    predefined type $type. $type can be any of 'jokers', 'sql', 'commas',
-    'brackets', 'win32' or 'unix'. An unknown or undefined value defaults to
-    'unix', except for 'dos', 'os2', 'MSWin32' and 'cygwin' that default to
-    'win32'. This means that you can pass $^O as the $type and get the
-    corresponding shell behaviour. Returns the object.
+    predefined type $type. $type can be any of :
+
+    *   'jokers', 'sql', 'commas', 'brackets'
+
+        Singleton types that enable the corresponding "do" classes.
+
+    *   'unix'
+
+        Covers typical Unix shell globbing features (effectively 'jokers'
+        and 'brackets').
+
+    *   $^O values for common Unix systems
+
+        Wrap to 'unix' (see perlport for the list).
+
+    *   "undef"
+
+        Defaults to 'unix'.
+
+    *   'win32'
+
+        Covers typical Windows shell globbing features (effectively 'jokers'
+        and 'commas').
+
+    *   'dos', 'os2', 'MSWin32', 'cygwin'
+
+        Wrap to 'win32'.
+
+    In particular, you can usually pass $^O as the $type and get the
+    corresponding shell behaviour.
 
         $rw->type('win32'); # Set type to win32.
+        $rw->type($^O);     # Set type to unix on Unices and win32 on Windows
         $rw->type();        # Set type to unix.
+
+    The "type" method returns the Regexp::Wildcards object.
 
   "capture [ $captures | set => $c1, add => $c2, rem => $c3 ]"
     Specifies the list of atoms to capture. This method works like "do",
     except that the classes are different :
 
-    *   'single' will capture all unescaped *"exactly one"* metacharacters,
-        i.e. "?" for wildcards or "_" for SQL ;
+    *   'single'
+
+        Captures all unescaped *"exactly one"* metacharacters, i.e. "?" for
+        wildcards or "_" for SQL.
 
             'a???b\\??' ==> 'a(.)(.)(.)b\\?(.)'
             'a___b\\__' ==> 'a(.)(.)(.)b\\_(.)'
 
-    *   'any' will capture all unescaped *"any"* metacharacters, i.e. "*"
-        for wildcards or "%" for SQL ;
+    *   'any'
+
+        Captures all unescaped *"any"* metacharacters, i.e. "*" for
+        wildcards or "%" for SQL.
 
             'a***b\\**' ==> 'a(.*)b\\*(.*)'
             'a%%%b\\%%' ==> 'a(.*)b\\%(.*)'
 
-    *   'greedy', when used in conjunction with 'any', will make the 'any'
-        captures greedy (by default they are not) ;
+    *   'greedy'
+
+        When used in conjunction with 'any', it makes the 'any' captures
+        greedy (by default they are not).
 
             'a***b\\**' ==> 'a(.*?)b\\*(.*?)'
             'a%%%b\\%%' ==> 'a(.*?)b\\%(.*?)'
 
-    *   'brackets' will capture matching "{ ... , ... }" alternations.
+    *   'brackets'
+
+        Capture matching "{ ... , ... }" alternations.
 
             'a{b\\},\\{c}' ==> 'a(b\\}|\\{c)'
 
@@ -159,12 +209,14 @@ METHODS
         $rw->capture(rem => 'greedy');           # No more greed please.
         $rw->capture();                          # Capture nothing.
 
+    The "capture" method returns the Regexp::Wildcards object.
+
   "convert $wc [ , $type ]"
     Converts the wildcard expression $wc into a regular expression according
     to the options stored into the Regexp::Wildcards object, or to $type if
     it's supplied. It successively escapes all unprotected regexp special
     characters that doesn't hold any meaning for wildcards, then replace
-    'jokers' or 'sql' and 'commas' or 'brackets' (depending on the "do" or
+    'jokers', 'sql' and 'commas' or 'brackets' (depending on the "do" or
     "type" options), all of this by applying the 'capture' rules specified
     in the constructor or by "capture".
 
@@ -180,11 +232,13 @@ CAVEATS
     the file extension). For example, Windows XP shell matches *a like
     ".*a", "*a?" like ".*a.?", "*a??" like ".*a.{0,2}" and so on.
 
+SEE ALSO
+    Text::Glob.
+
 AUTHOR
     Vincent Pit, "<perl at profvince.com>", <http://www.profvince.com>.
 
-    You can contact me by mail or on #perl @ FreeNode (vincent or
-    Prof_Vince).
+    You can contact me by mail or on "irc.perl.org" (vincent).
 
 BUGS
     Please report any bugs or feature requests to "bug-regexp-wildcards at
@@ -202,7 +256,7 @@ SUPPORT
     <http://www.profvince.com/perl/cover/Regexp-Wildcards>.
 
 COPYRIGHT & LICENSE
-    Copyright 2007-2008 Vincent Pit, all rights reserved.
+    Copyright 2007-2009 Vincent Pit, all rights reserved.
 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.

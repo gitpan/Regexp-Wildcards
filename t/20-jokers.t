@@ -3,43 +3,46 @@
 use strict;
 use warnings;
 
-use Test::More tests => 2 * (4 + 2 + 7 + 8 + 6 + 2) * 3;
+use Test::More tests => 3 * (4 + 2 + 7 + 8 + 6 + 2) * 3;
 
 use Regexp::Wildcards;
 
 sub try {
  my ($rw, $s, $x, $y) = @_;
  $y = $x unless defined $y;
- my $t = $rw->{type};
- is($rw->convert('ab' . $x),      'ab' . $y,      $s . ' (begin) ['.$t.']');
- is($rw->convert('a' . $x . 'b'), 'a' . $y . 'b', $s . ' (middle) ['.$t.']');
- is($rw->convert($x . 'ab'),      $y . 'ab',      $s . ' (end) ['.$t.']');
+ my $d = $rw->{do};
+ $d = join ' ', keys %$d if ref($d) eq 'HASH';
+ is($rw->convert('ab' . $x),      'ab' . $y,      $s . " (begin) [$d]");
+ is($rw->convert('a' . $x . 'b'), 'a' . $y . 'b', $s . " (middle) [$d]");
+ is($rw->convert($x . 'ab'),      $y . 'ab',      $s . " (end) [$d]");
 }
 
 sub alltests {
- my ($t, $one, $any) = @_;
+ my ($d, $one, $any) = @_;
 
  my $rw = Regexp::Wildcards->new;
- $rw->type($t);
+ $rw->do(set => $d);
+
+ $d = join ' ', keys %$d if ref($d) eq 'HASH';
 
  # Simple
 
  try $rw, "simple $any", $any, '.*';
  try $rw, "simple $one", $one, '.';
 
- is($rw->convert($one.$any.'ab', $t), '..*ab',
-    "simple $one and $any (begin) [$t]");
- is($rw->convert($one.'a'.$any.'b', $t), '.a.*b',
-    "simple $one and $any (middle) [$t]");
- is($rw->convert($one.'ab'.$any, $t), '.ab.*',
-    "simple $one and $any (end) [$t]");
+ is($rw->convert($one.$any.'ab'), '..*ab',
+    "simple $one and $any (begin) [$d]");
+ is($rw->convert($one.'a'.$any.'b'), '.a.*b',
+    "simple $one and $any (middle) [$d]");
+ is($rw->convert($one.'ab'.$any), '.ab.*',
+    "simple $one and $any (end) [$d]");
 
- is($rw->convert($any.'ab'.$one, $t), '.*ab.',
-    "simple $any and $one (begin) [$t]");
- is($rw->convert('a'.$any.'b'.$one, $t), 'a.*b.',
-    "simple $any and $one (middle) [$t]");
- is($rw->convert('ab'.$any.$one, $t), 'ab.*.',
-    "simple $any and $one (end) [$t]");
+ is($rw->convert($any.'ab'.$one), '.*ab.',
+    "simple $any and $one (begin) [$d]");
+ is($rw->convert('a'.$any.'b'.$one), 'a.*b.',
+    "simple $any and $one (middle) [$d]");
+ is($rw->convert('ab'.$any.$one), 'ab.*.',
+    "simple $any and $one (end) [$d]");
 
  # Multiple
 
@@ -101,5 +104,6 @@ sub alltests {
  try $rw, "mixed $one and \\$one", $one.'\\'.$one.$one, '.\\'.$one.'.';
 }
 
-alltests 'jokers', '?', '*';
-alltests 'sql',    '_', '%';
+alltests 'jokers',           '?', '*';
+alltests 'sql',              '_', '%';
+alltests [ qw/jokers sql/ ], '_', '*';

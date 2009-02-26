@@ -1,5 +1,12 @@
 Revision history for Regexp-Wildcards
 
+1.03    2009-02-26 15:35 UTC
+        + Add : Translating both 'jokers' and 'sql' at the same time.
+        + Doc : Cleanups.
+        + Fix : The ->type forgot how to really accept $^O since the rewrite.
+                Reported by Bruce McKenzie in RT #43643.
+        + Upd : META.yml spec updated to 1.4.
+
 1.02    2008-08-23 09:15 UTC
         + Add : The 'anchor' metacharacter class.
 

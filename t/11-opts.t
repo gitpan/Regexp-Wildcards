@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 8;
+use Test::More tests => 10;
 
 use Regexp::Wildcards;
 
@@ -20,6 +20,10 @@ my $jok_gr = 'a\\,b\\{c\\,d\\}e.*f.(g)';
 is($rw->convert($wc), $unix,  'nothing defaults to unix');
 $rw->type('win32');
 is($rw->convert($wc), $win32, 'set to win32');
+$rw->type('darwin');
+is($rw->convert($wc), $unix,  'set to darwin');
+$rw->type('MSWin32');
+is($rw->convert($wc), $win32, 'reset to win32');
 $rw->type();
 is($rw->convert($wc), $unix,  'reset to unix');
 
