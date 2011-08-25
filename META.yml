@@ -1,30 +1,34 @@
---- #YAML:1.0
-name:               Regexp-Wildcards
-version:            1.03
-abstract:           Converts wildcard expressions to Perl regular expressions.
+---
+abstract: 'Converts wildcard expressions to Perl regular expressions.'
 author:
-    - Vincent Pit <perl@profvince.com>
-license:            perl
-distribution_type:  module
-configure_requires:
-    ExtUtils::MakeMaker:  0
+  - 'Vincent Pit <perl@profvince.com>'
 build_requires:
-    ExtUtils::MakeMaker:  0
-    Test::More:           0
-requires:
-    Carp:            0
-    perl:            5.006
-    Text::Balanced:  0
-resources:
-    bugtracker:  http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Regexp-Wildcards
-    homepage:    http://search.cpan.org/dist/Regexp-Wildcards/
-    license:     http://dev.perl.org/licenses/
-    repository:  http://git.profvince.com/perl/modules/Regexp-Wildcards.git
-no_index:
-    directory:
-        - t
-        - inc
-generated_by:       ExtUtils::MakeMaker version 6.48
+  Carp: 0
+  ExtUtils::MakeMaker: 0
+  Scalar::Util: 0
+  Test::More: 0
+  Text::Balanced: 0
+configure_requires:
+  ExtUtils::MakeMaker: 0
+dynamic_config: 0
+generated_by: 'ExtUtils::MakeMaker version 6.59, CPAN::Meta::Converter version 2.112150'
+license: perl
 meta-spec:
-    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
-    version:  1.4
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Regexp-Wildcards
+no_index:
+  directory:
+    - t
+    - inc
+requires:
+  Carp: 0
+  Scalar::Util: 0
+  Text::Balanced: 0
+  perl: 5.006
+resources:
+  bugtracker: http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Regexp-Wildcards
+  homepage: http://search.cpan.org/dist/Regexp-Wildcards/
+  license: http://dev.perl.org/licenses/
+  repository: http://git.profvince.com/?p=perl%2Fmodules%2FRegexp-Wildcards.git
+version: 1.04

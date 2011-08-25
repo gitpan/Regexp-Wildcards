@@ -27,7 +27,7 @@ is($rw->convert($wc), $win32, 'reset to win32');
 $rw->type();
 is($rw->convert($wc), $unix,  'reset to unix');
 
-$rw = Regexp::Wildcards->new(do => [ qw/jokers/ ], type => 'win32');
+$rw = Regexp::Wildcards->new(do => [ qw<jokers> ], type => 'win32');
 is($rw->convert($wc), $jokers, 'do overrides type in new');
 $rw->do(add => 'groups');
 is($rw->convert($wc), $jok_gr, 'added groups to jokers');

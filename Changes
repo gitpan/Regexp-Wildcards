@@ -1,5 +1,12 @@
 Revision history for Regexp-Wildcards
 
+1.04    2011-08-25 12:50 UTC
+        + Chg : Minor code cleanups.
+        + Fix : Use Scalar::Util::blessed() to check objects classes.
+                Scalar::Util is required.
+        + Fix : Work around Kwalitee test misfailures.
+        + Upd : The distribution metadata was updated to modern standards.
+
 1.03    2009-02-26 15:35 UTC
         + Add : Translating both 'jokers' and 'sql' at the same time.
         + Doc : Cleanups.

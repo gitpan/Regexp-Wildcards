@@ -3,8 +3,9 @@ package Regexp::Wildcards;
 use strict;
 use warnings;
 
-use Carp qw/croak/;
-use Text::Balanced qw/extract_bracketed/;
+use Carp           qw<croak>;
+use Scalar::Util   qw<blessed>;
+use Text::Balanced qw<extract_bracketed>;
 
 =head1 NAME
 
@@ -12,13 +13,13 @@ Regexp::Wildcards - Converts wildcard expressions to Perl regular expressions.
 
 =head1 VERSION
 
-Version 1.03
+Version 1.04
 
 =cut
 
-use vars qw/$VERSION/;
+use vars qw<$VERSION>;
 BEGIN {
- $VERSION = '1.03';
+ $VERSION = '1.04';
 }
 
 =head1 SYNOPSIS
@@ -34,12 +35,12 @@ BEGIN {
     $re = $rw->convert('%a_c%',   'sql');    # Turn SQL wildcards into regexps.
 
     $rw = Regexp::Wildcards->new(
-     do      => [ qw/jokers brackets/ ], # Do jokers and brackets.
-     capture => [ qw/any greedy/ ],      # Capture *'s greedily.
+     do      => [ qw<jokers brackets> ], # Do jokers and brackets.
+     capture => [ qw<any greedy> ],      # Capture *'s greedily.
     );
 
     $rw->do(add => 'groups');            # Don't escape groups.
-    $rw->capture(rem => [ qw/greedy/ ]); # Actually we want non-greedy matches.
+    $rw->capture(rem => [ qw<greedy> ]); # Actually we want non-greedy matches.
     $re = $rw->convert('*a{,(b)?}?c*');  # '(.*?)a(?:|(b).).c(.*?)'
     $rw->capture();                      # No more captures.
 
@@ -61,24 +62,24 @@ Typesets that mimic the behaviour of Windows and Unix shells are also provided.
 
 sub _check_self {
  croak 'First argument isn\'t a valid ' . __PACKAGE__ . ' object'
-  unless ref $_[0] and $_[0]->isa(__PACKAGE__);
+  unless blessed $_[0] and $_[0]->isa(__PACKAGE__);
 }
 
 my %types = (
- jokers   => [ qw/jokers/ ],
- sql      => [ qw/sql/ ],
- commas   => [ qw/commas/ ],
- brackets => [ qw/brackets/ ],
- unix     => [ qw/jokers brackets/ ],
- win32    => [ qw/jokers commas/ ],
+ jokers   => [ qw<jokers> ],
+ sql      => [ qw<sql> ],
+ commas   => [ qw<commas> ],
+ brackets => [ qw<brackets> ],
+ unix     => [ qw<jokers brackets> ],
+ win32    => [ qw<jokers commas> ],
 );
-$types{$_} = $types{win32} for qw/dos os2 MSWin32 cygwin/;
-$types{$_} = $types{unix}  for qw/linux
+$types{$_} = $types{win32} for qw<dos os2 MSWin32 cygwin>;
+$types{$_} = $types{unix}  for qw<linux
                                   darwin machten next
                                   aix irix hpux dgux dynixptx
                                   bsdos freebsd openbsd
                                   svr4 solaris sunos dec_osf
-                                  sco_sv unicos unicosmk/;
+                                  sco_sv unicos unicosmk>;
 
 my %escapes = (
  jokers   => '?*',
@@ -95,7 +96,7 @@ my %captures = (
                                             : '(.*?)')
                          : '.*' },
  brackets => sub { $_[1] ? '(' : '(?:'; },
- greedy   => undef
+ greedy   => undef,
 );
 
 sub _validate {
@@ -115,9 +116,10 @@ sub _validate {
  }
 
  my %checked;
- for (qw/set add rem/) {
+ for (qw<set add rem>) {
   my $opt = $opts{$_};
   next unless defined $opt;
+
   my $cb = {
    ''      => sub { +{ ($_[0] => 1) x (exists $valid->{$_[0]}) } },
    'ARRAY' => sub { +{ map { ($_ => 1) x (exists $valid->{$_}) } @{$_[0]} } },
@@ -139,24 +141,29 @@ sub _validate {
 
 sub _do {
  my $self = shift;
+
  my $config;
- $config->{do} = $self->_validate(\%escapes, $self->{do}, @_);
- $config->{escape} = '';
+ $config->{do}      = $self->_validate(\%escapes, $self->{do}, @_);
+ $config->{escape}  = '';
  $config->{escape} .= $escapes{$_} for keys %{$config->{do}};
- $config->{escape} = quotemeta $config->{escape};
+ $config->{escape}  = quotemeta $config->{escape};
+
  $config;
 }
 
 sub do {
  my $self = shift;
  _check_self $self;
- my $config = $self->_do(@_);
+
+ my $config  = $self->_do(@_);
  $self->{$_} = $config->{$_} for keys %$config;
+
  $self;
 }
 
 sub _capture {
  my $self = shift;
+
  my $config;
  $config->{capture} = $self->_validate(\%captures, $self->{capture}, @_);
  $config->{greedy}  = delete $config->{capture}->{greedy};
@@ -164,46 +171,56 @@ sub _capture {
   $config->{'c_' . $_} = $captures{$_}->($config, $config->{capture}->{$_})
                                                if $captures{$_}; # Skip 'greedy'
  }
+
  $config;
 }
 
 sub capture {
  my $self = shift;
  _check_self $self;
- my $config = $self->_capture(@_);
+
+ my $config  = $self->_capture(@_);
  $self->{$_} = $config->{$_} for keys %$config;
+
  $self;
 }
 
 sub _type {
  my ($self, $type) = @_;
- $type = 'unix'      unless defined $type;
- croak 'Wrong type'  unless exists $types{$type};
- my $config = $self->_do($types{$type});
+ $type = 'unix'     unless defined $type;
+ croak 'Wrong type' unless exists $types{$type};
+
+ my $config      = $self->_do($types{$type});
  $config->{type} = $type;
+
  $config;
 }
 
 sub type {
  my $self = shift;
  _check_self $self;
- my $config = $self->_type(@_);
+
+ my $config  = $self->_type(@_);
  $self->{$_} = $config->{$_} for keys %$config;
+
  $self;
 }
 
 sub new {
  my $class = shift;
- $class = ref($class) || $class || __PACKAGE__;
+ $class    = blessed($class) || $class || __PACKAGE__;
+
  croak 'Optional arguments must be passed as key => value pairs' if @_ % 2;
  my %args = @_;
- my $self = { };
- bless $self, $class;
+
+ my $self = bless { }, $class;
+
  if (defined $args{do}) {
   $self->do($args{do});
  } else {
   $self->type($args{type});
  }
+
  $self->capture($args{capture});
 }
 
@@ -310,7 +327,7 @@ No argument means C<< set => [ ] >>.
 
     $rw->do(set => 'jokers');           # Only translate jokers.
     $rw->do('jokers');                  # Same.
-    $rw->do(add => [ qw/sql commas/ ]); # Translate also SQL and commas.
+    $rw->do(add => [ qw<sql commas> ]); # Translate also SQL and commas.
     $rw->do(rem => 'jokers');           # Specifying both 'sql' and 'jokers' is useless.
     $rw->do();                          # Translate nothing.
 
@@ -415,7 +432,7 @@ Capture matching C<{ ... , ... }> alternations.
 
     $rw->capture(set => 'single');           # Only capture "exactly one" metacharacters.
     $rw->capture('single');                  # Same.
-    $rw->capture(add => [ qw/any greedy/ ]); # Also greedily capture "any" metacharacters.
+    $rw->capture(add => [ qw<any greedy> ]); # Also greedily capture "any" metacharacters.
     $rw->capture(rem => 'greedy');           # No more greed please.
     $rw->capture();                          # Capture nothing.
 
@@ -431,6 +448,7 @@ It successively escapes all unprotected regexp special characters that doesn't h
 sub convert {
  my ($self, $wc, $type) = @_;
  _check_self $self;
+
  my $config = (defined $type) ? $self->_type($type) : $self;
  return unless defined $wc;
 
@@ -459,7 +477,7 @@ sub convert {
   $wc = $self->{'c_brackets'} . $self->_commas($wc) . ')';
  }
 
- return $wc;
+ $wc
 }
 
 =head1 EXPORT
@@ -468,7 +486,7 @@ An object module shouldn't export any function, and so does this one.
 
 =head1 DEPENDENCIES
 
-L<Carp> (core module since perl 5), L<Text::Balanced> (since 5.7.3).
+L<Carp> (core module since perl 5), L<Scalar::Util>, L<Text::Balanced> (since 5.7.3).
 
 =head1 CAVEATS
 
@@ -511,55 +529,67 @@ sub _extract ($) { extract_bracketed $_[0], '{',  qr/.*?(?<!\\)(?:\\\\)*(?={)/ }
 sub _jokers {
  my $self = shift;
  local $_ = $_[0];
+
  # substitute ? preceded by an even number of \
  my $s = $self->{c_single};
  s/(?<!\\)((?:\\\\)*)\?/$1$s/g;
  # substitute * preceded by an even number of \
  $s = $self->{c_any};
  s/(?<!\\)((?:\\\\)*)\*+/$1$s/g;
- return $_;
+
+ $_
 }
 
 sub _sql {
  my $self = shift;
  local $_ = $_[0];
+
  # substitute _ preceded by an even number of \
  my $s = $self->{c_single};
  s/(?<!\\)((?:\\\\)*)_/$1$s/g;
  # substitute % preceded by an even number of \
  $s = $self->{c_any};
  s/(?<!\\)((?:\\\\)*)%+/$1$s/g;
- return $_;
+
+ $_
 }
 
 sub _commas {
  local $_ = $_[1];
+
  # substitute , preceded by an even number of \
  s/(?<!\\)((?:\\\\)*),/$1|/g;
- return $_;
+
+ $_
 }
 
 sub _brackets {
  my ($self, $rest) = @_;
+
  substr $rest, 0, 1, '';
  chop $rest;
+
  my ($re, $bracket, $prefix) = ('');
  while (do { ($bracket, $rest, $prefix) = _extract $rest; $bracket }) {
   $re .= $self->_commas($prefix) . $self->_brackets($bracket);
  }
  $re .= $self->_commas($rest);
- return $self->{c_brackets} . $re . ')';
+
+ $self->{c_brackets} . $re . ')';
 }
 
 sub _bracketed {
  my ($self, $rest) = @_;
+
  my ($re, $bracket, $prefix) = ('');
  while (do { ($bracket, $rest, $prefix) = _extract $rest; $bracket }) {
   $re .= $prefix . $self->_brackets($bracket);
  }
  $re .= $rest;
+
  $re =~ s/(?<!\\)((?:\\\\)*[\{\},])/\\$1/g;
- return $re;
+
+ $re;
 }
 
 1; # End of Regexp::Wildcards

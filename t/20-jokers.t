@@ -55,14 +55,14 @@ sub alltests {
  try $rw, "multiple capturing $one", $one.$one.'\\'.$one.$one,
                                     '(.)(.)\\'.$one.'(.)';
 
- $rw->capture(add => [ qw/any greedy/ ]);
+ $rw->capture(add => [ qw<any greedy> ]);
  try $rw, "multiple capturing $any (greedy)", $any.$any.'\\'.$any.$any,
                                               '(.*)\\'.$any.'(.*)';
  my $wc = $any.$any.$one.$one.'\\'.$one.$one.'\\'.$any.$any;
  try $rw, "multiple capturing $any (greedy) and capturing $one",
           $wc, '(.*)(.)(.)\\'.$one.'(.)\\'.$any.'(.*)';
 
- $rw->capture(set => [ qw/any greedy/ ]);
+ $rw->capture(set => [ qw<any greedy> ]);
  try $rw, "multiple capturing $any (greedy) and non-capturing $one",
           $wc, '(.*)..\\'.$one.'.\\'.$any.'(.*)';
 
@@ -106,4 +106,4 @@ sub alltests {
 
 alltests 'jokers',           '?', '*';
 alltests 'sql',              '_', '%';
-alltests [ qw/jokers sql/ ], '_', '*';
+alltests [ qw<jokers sql> ], '_', '*';

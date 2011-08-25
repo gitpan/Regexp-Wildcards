@@ -7,7 +7,7 @@ use Test::More tests => 6;
 
 use Regexp::Wildcards;
 
-my $rw = Regexp::Wildcards->new(do => [ qw/jokers brackets groups/ ]);
+my $rw = Regexp::Wildcards->new(do => [ qw<jokers brackets groups> ]);
 
 is($rw->convert('a(?)b'), 'a(.)b',                'groups: single');
 is($rw->convert('a(*)b'), 'a(.*)b',               'groups: any');

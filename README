@@ -3,7 +3,7 @@ NAME
     expressions.
 
 VERSION
-    Version 1.03
+    Version 1.04
 
 SYNOPSIS
         use Regexp::Wildcards;
@@ -17,12 +17,12 @@ SYNOPSIS
         $re = $rw->convert('%a_c%',   'sql');    # Turn SQL wildcards into regexps.
 
         $rw = Regexp::Wildcards->new(
-         do      => [ qw/jokers brackets/ ], # Do jokers and brackets.
-         capture => [ qw/any greedy/ ],      # Capture *'s greedily.
+         do      => [ qw<jokers brackets> ], # Do jokers and brackets.
+         capture => [ qw<any greedy> ],      # Capture *'s greedily.
         );
 
         $rw->do(add => 'groups');            # Don't escape groups.
-        $rw->capture(rem => [ qw/greedy/ ]); # Actually we want non-greedy matches.
+        $rw->capture(rem => [ qw<greedy> ]); # Actually we want non-greedy matches.
         $re = $rw->convert('*a{,(b)?}?c*');  # '(.*?)a(?:|(b).).c(.*?)'
         $rw->capture();                      # No more captures.
 
@@ -124,7 +124,7 @@ METHODS
 
         $rw->do(set => 'jokers');           # Only translate jokers.
         $rw->do('jokers');                  # Same.
-        $rw->do(add => [ qw/sql commas/ ]); # Translate also SQL and commas.
+        $rw->do(add => [ qw<sql commas> ]); # Translate also SQL and commas.
         $rw->do(rem => 'jokers');           # Specifying both 'sql' and 'jokers' is useless.
         $rw->do();                          # Translate nothing.
 
@@ -205,7 +205,7 @@ METHODS
 
         $rw->capture(set => 'single');           # Only capture "exactly one" metacharacters.
         $rw->capture('single');                  # Same.
-        $rw->capture(add => [ qw/any greedy/ ]); # Also greedily capture "any" metacharacters.
+        $rw->capture(add => [ qw<any greedy> ]); # Also greedily capture "any" metacharacters.
         $rw->capture(rem => 'greedy');           # No more greed please.
         $rw->capture();                          # Capture nothing.
 
@@ -224,7 +224,8 @@ EXPORT
     An object module shouldn't export any function, and so does this one.
 
 DEPENDENCIES
-    Carp (core module since perl 5), Text::Balanced (since 5.7.3).
+    Carp (core module since perl 5), Scalar::Util, Text::Balanced (since
+    5.7.3).
 
 CAVEATS
     This module does not implement the strange behaviours of Windows shell

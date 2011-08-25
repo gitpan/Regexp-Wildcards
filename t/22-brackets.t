@@ -7,7 +7,7 @@ use Test::More tests => 27;
 
 use Regexp::Wildcards;
 
-my $rw = Regexp::Wildcards->new(qw/do brackets/);
+my $rw = Regexp::Wildcards->new(qw<do brackets>);
 
 is($rw->convert('a{b\\\\,c\\\\}d', 'jokers'), 'a\\{b\\\\\\,c\\\\\\}d','jokers');
 
