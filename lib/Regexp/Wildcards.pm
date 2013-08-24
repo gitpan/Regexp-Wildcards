@@ -13,13 +13,13 @@ Regexp::Wildcards - Converts wildcard expressions to Perl regular expressions.
 
 =head1 VERSION
 
-Version 1.04
+Version 1.05
 
 =cut
 
 use vars qw<$VERSION>;
 BEGIN {
- $VERSION = '1.04';
+ $VERSION = '1.05';
 }
 
 =head1 SYNOPSIS
@@ -31,8 +31,10 @@ BEGIN {
     my $re;
     $re = $rw->convert('a{b?,c}*');          # Do it Unix shell style.
     $re = $rw->convert('a?,b*',   'win32');  # Do it Windows shell style.
-    $re = $rw->convert('*{x,y}?', 'jokers'); # Process the jokers and escape the rest.
-    $re = $rw->convert('%a_c%',   'sql');    # Turn SQL wildcards into regexps.
+    $re = $rw->convert('*{x,y}?', 'jokers'); # Process the jokers and
+                                             # escape the rest.
+    $re = $rw->convert('%a_c%',   'sql');    # Turn SQL wildcards into
+                                             # regexps.
 
     $rw = Regexp::Wildcards->new(
      do      => [ qw<jokers brackets> ], # Do jokers and brackets.
@@ -40,7 +42,8 @@ BEGIN {
     );
 
     $rw->do(add => 'groups');            # Don't escape groups.
-    $rw->capture(rem => [ qw<greedy> ]); # Actually we want non-greedy matches.
+    $rw->capture(rem => [ qw<greedy> ]); # Actually we want non-greedy
+                                         # matches.
     $re = $rw->convert('*a{,(b)?}?c*');  # '(.*?)a(?:|(b).).c(.*?)'
     $rw->capture();                      # No more captures.
 
@@ -224,7 +227,10 @@ sub new {
  $self->capture($args{capture});
 }
 
-=head2 C<< new [ do => $what E<verbar> type => $type ], capture => $captures >>
+=head2 C<new>
+
+    my $rw = Regexp::Wildcards->new(do => $what, capture => $capture);
+    my $rw = Regexp::Wildcards->new(type => $type, capture => $capture);
 
 Constructs a new L<Regexp::Wildcard> object.
 
@@ -238,7 +244,12 @@ The C<do> option overrides C<type>.
 C<capture> lists which atoms should be capturing.
 Refer to L</capture> for more details.
 
-=head2 C<< do [ $what E<verbar> set => $c1, add => $c2, rem => $c3 ] >>
+=head2 C<do>
+
+    $rw->do($what);
+    $rw->do(set => $c1);
+    $rw->do(add => $c2);
+    $rw->do(rem => $c3);
 
 Specifies the list of metacharacters to convert or to prevent for escaping.
 They fit into six classes :
@@ -328,12 +339,15 @@ No argument means C<< set => [ ] >>.
     $rw->do(set => 'jokers');           # Only translate jokers.
     $rw->do('jokers');                  # Same.
     $rw->do(add => [ qw<sql commas> ]); # Translate also SQL and commas.
-    $rw->do(rem => 'jokers');           # Specifying both 'sql' and 'jokers' is useless.
+    $rw->do(rem => 'jokers');           # Specifying both 'sql' and
+                                        # 'jokers' is useless.
     $rw->do();                          # Translate nothing.
 
 The C<do> method returns the L<Regexp::Wildcards> object.
 
-=head2 C<type $type>
+=head2 C<type>
+
+    $rw->type($type);
 
 Notifies to convert the metacharacters that corresponds to the predefined type C<$type>.
 C<$type> can be any of :
@@ -386,7 +400,12 @@ In particular, you can usually pass C<$^O> as the C<$type> and get the correspon
 
 The C<type> method returns the L<Regexp::Wildcards> object.
 
-=head2 C<< capture [ $captures E<verbar> set => $c1, add => $c2, rem => $c3 ] >>
+=head2 C<capture>
+
+    $rw->capture($captures);
+    $rw->capture(set => $c1);
+    $rw->capture(add => $c2);
+    $rw->capture(rem => $c3);
 
 Specifies the list of atoms to capture.
 This method works like L</do>, except that the classes are different :
@@ -430,15 +449,20 @@ Capture matching C<{ ... , ... }> alternations.
 
 =back
 
-    $rw->capture(set => 'single');           # Only capture "exactly one" metacharacters.
+    $rw->capture(set => 'single');           # Only capture "exactly one"
+                                             # metacharacters.
     $rw->capture('single');                  # Same.
-    $rw->capture(add => [ qw<any greedy> ]); # Also greedily capture "any" metacharacters.
+    $rw->capture(add => [ qw<any greedy> ]); # Also greedily capture
+                                             # "any" metacharacters.
     $rw->capture(rem => 'greedy');           # No more greed please.
     $rw->capture();                          # Capture nothing.
 
 The C<capture> method returns the L<Regexp::Wildcards> object.
 
-=head2 C<convert $wc [ , $type ]>
+=head2 C<convert>
+
+    my $rx = $rw->convert($wc);
+    my $rx = $rw->convert($wc, $type);
 
 Converts the wildcard expression C<$wc> into a regular expression according to the options stored into the L<Regexp::Wildcards> object, or to C<$type> if it's supplied.
 It successively escapes all unprotected regexp special characters that doesn't hold any meaning for wildcards, then replace C<'jokers'>, C<'sql'> and C<'commas'> or C<'brackets'> (depending on the L</do> or L</type> options), all of this by applying the C<'capture'> rules specified in the constructor or by L</capture>.
@@ -505,7 +529,8 @@ You can contact me by mail or on C<irc.perl.org> (vincent).
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<bug-regexp-wildcards at rt.cpan.org>, or through the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Regexp-Wildcards>. I will be notified, and then you'll automatically be notified of progress on your bug as I make changes.
+Please report any bugs or feature requests to C<bug-regexp-wildcards at rt.cpan.org>, or through the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Regexp-Wildcards>.
+I will be notified, and then you'll automatically be notified of progress on your bug as I make changes.
 
 =head1 SUPPORT
 
@@ -517,7 +542,7 @@ Tests code coverage report is available at L<http://www.profvince.com/perl/cover
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2007-2009 Vincent Pit, all rights reserved.
+Copyright 2007,2008,2009,2013 Vincent Pit, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

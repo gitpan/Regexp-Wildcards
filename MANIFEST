@@ -1,10 +1,10 @@
 Changes
-lib/Regexp/Wildcards.pm
-Makefile.PL
 MANIFEST
 META.json
 META.yml
+Makefile.PL
 README
+lib/Regexp/Wildcards.pm
 samples/wc2re.pl
 t/00-load.t
 t/02-can.t
@@ -15,7 +15,3 @@ t/21-commas.t
 t/22-brackets.t
 t/23-groups.t
 t/24-anchors.t
-t/91-pod.t
-t/92-pod-coverage.t
-t/95-portability-files.t
-t/99-kwalitee.t

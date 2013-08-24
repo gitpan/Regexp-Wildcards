@@ -37,7 +37,7 @@ for (qw<do capture>) {
 
  eval { $rw->$_(\*STDERR) };
  like($@, qr/Wrong\s+option\s+set/, "RW::$_ don't want globs");
- 
+
  eval { $rw->$_(qw<a b c>) };
  like($@, qr/Arguments\s+must\s+be\s+passed.*unique\s+scalar.*key\s+=>\s+value\s+pairs/, "RW::$_ gets parameters after the first as key => value pairs");
 }
